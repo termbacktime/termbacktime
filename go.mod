@@ -1,4 +1,4 @@
-module github.com/LouisT/termbacktime
+module github.com/termbacktime/termbacktime
 
 go 1.12
 

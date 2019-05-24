@@ -21,7 +21,7 @@
 package main
 
 import (
-	record "github.com/LouisT/termbacktime/cmd"
+	record "github.com/termbacktime/termbacktime/cmd"
 )
 
 func main() {

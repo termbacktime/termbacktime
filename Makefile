@@ -1,7 +1,7 @@
 PBURL=https://termbackti.me
 GISTAPI=https://api.github.com/gists
 ABLYIO_TOKEN=Yn3xbQ.W4fPqA:_aZ8tpIGEPJXscWv
-GITURL=github.com/LouisT/termbacktime
+GITURL=github.com/termbacktime/termbacktime
 APP_NAME=termbacktime
 VERSION=0.0.2-alpha
 CONFIG_TYPE=json
