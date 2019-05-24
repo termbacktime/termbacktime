@@ -33,6 +33,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"regexp"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -203,7 +204,15 @@ var recordCmd = &cobra.Command{
 
 		// Start recording Object.
 		ccmd := shell(cmd)
-		rec := Recording{Started: time.Now().Unix(), Title: ccmd}
+		rec := Recording{
+			Info: Info{
+				Arch: runtime.GOARCH,
+				OS:   runtime.GOOS,
+				Go:   runtime.Version(),
+			},
+			Started: time.Now().Unix(),
+			Title:   ccmd,
+		}
 		rec.setTerminalDimensions(true)
 
 		// Start PTY.
@@ -354,7 +363,7 @@ func init() {
 	viper.SetConfigType(ConfigType)
 	cobra.OnInitialize(initConfig)
 	recordCmd.Version = Version
-	recordCmd.SetVersionTemplate(fmt.Sprintf("%s - version=%s revision=%s\r\n", Application, Version, Revision))
+	recordCmd.SetVersionTemplate(fmt.Sprintf("%s - version=%s revision=%s (%s)\r\n", Application, Version, Revision, runtime.Version()))
 	recordCmd.Flags().StringP("shell", "s", os.Getenv("SHELL"), "set the shell to use for recording")
 	recordCmd.PersistentFlags().StringVar(&GithubToken, "token", "", "use the specified GitHub authentication token")
 	recordCmd.PersistentFlags().StringVar(&cfgFile, "config", fmt.Sprintf("%s%s.termbacktime.%s", HomeDir, string(os.PathSeparator), ConfigType), "config file")

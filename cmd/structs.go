@@ -22,6 +22,7 @@ package cmd
 
 // Recording JSON struct for recordings.
 type Recording struct {
+	Info    Info    `json:"i"`
 	Started int64   `json:"d"`
 	Title   string  `json:"t,omitempty"`
 	Sizes   []int   `json:"s,omitempty"`
@@ -37,14 +38,21 @@ type Lines struct {
 	Sizes   []int    `json:"s,omitempty"`
 }
 
-// GistFile is the top-level struct for a gist file
+// GistFile is the top-level struct for a gist file.
 type GistFile struct {
 	Content string `json:"content"`
 }
 
-// Gist is the required structure for POST data for API purposes
+// Gist is the required structure for POST data for API purposes.
 type Gist struct {
 	Description string              `json:"description,omitempty"`
 	Public      bool                `json:"public,omitempty"`
 	GistFile    map[string]GistFile `json:"files,omitempty"`
+}
+
+// Info is the distro information.
+type Info struct {
+	Arch string `json:"a"`
+	OS   string `json:"o"`
+	Go   string `json:"v"`
 }
