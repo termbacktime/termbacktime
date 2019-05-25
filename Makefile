@@ -17,6 +17,7 @@ build:
 	go build -o ./builds/$(APP_NAME) -v ${LDFLAGS}
 build-crosscompile:
 	GOOS=darwin GOARCH=amd64 go build -o ./builds/$(BINARY_DARWIN) -v ${LDFLAGS}
+	GOOS=darwin GOARCH=386 go build -o ./builds/$(BINARY_DARWIN)-386 -v ${LDFLAGS}
 	GOOS=linux GOARCH=amd64 go build -o ./builds/$(BINARY_UNIX) -v ${LDFLAGS}
 	GOOS=linux GOARCH=386 go build -o ./builds/$(BINARY_UNIX)-386 -v ${LDFLAGS}
 	GOOS=linux GOARCH=arm64 go build -o ./builds/$(BINARY_UNIX)-arm64 -v ${LDFLAGS}
