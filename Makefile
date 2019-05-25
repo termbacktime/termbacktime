@@ -27,9 +27,10 @@ install:
 uninstall:
 	go clean -i
 test:
+	go vet ./...
 	go test -v ./...
 clean:
 	go clean
 	rm -rf ./builds/termbacktime*
 run:
-	go run -v ${LDFLAGS} ./...
+	go run -v ${LDFLAGS} ./main.go

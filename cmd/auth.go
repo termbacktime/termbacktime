@@ -38,11 +38,14 @@ func uuid() string {
 	return fmt.Sprintf("%x-%x-%x%x-%x%x-%x", b[0:4], b[4:6], (b[6]&0x0f)|0x40, b[7:8], (b[8]&0x3f)|0x80, b[9:10], b[10:])
 }
 
-func saveToken(tkn string, man bool) {
+func saveToken(tkn string, usr string, man bool) {
 	if man {
 		fmt.Printf("Saving token: %s\r\n", tkn)
 	}
 	viper.Set("token", tkn)
+	if len(usr) > 0 {
+		viper.Set("login", usr)
+	}
 	if err := viper.WriteConfig(); err == nil {
 		fmt.Println(au.Sprintf(au.Bold("Saved config: %s"), viper.ConfigFileUsed()))
 		os.Exit(0)
@@ -66,7 +69,7 @@ var authCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		tkn := cmd.Flag("set-token").Value.String()
 		if len(tkn) > 0 {
-			saveToken(tkn, true)
+			saveToken(tkn, "", true)
 		} else {
 			client, err := ably.NewRealtimeClient(ably.NewClientOptions(AblyToken))
 			if err != nil {
@@ -86,8 +89,8 @@ var authCmd = &cobra.Command{
 
 			go func() {
 				ticker := time.Tick(time.Second)
-				fmt.Print(colorify("Waiting for token; timeout in %d seconds...", 30))
-				for i := 29; i >= 0; i-- {
+				fmt.Print(colorify("Waiting for token; timeout in %d seconds...", 60))
+				for i := 59; i >= 0; i-- {
 					<-ticker
 					fmt.Printf("\r%s", colorify("Waiting for token; timeout in %d seconds...", i))
 				}
@@ -99,7 +102,7 @@ var authCmd = &cobra.Command{
 				if data, ok := msg.Data.(map[string]interface{}); ok {
 					if data["login"] != "" {
 						fmt.Printf("\rLogged in as %s - Token: %s\r\n", data["login"], data["token"])
-						saveToken(fmt.Sprintf("%s", data["token"]), false)
+						saveToken(fmt.Sprintf("%s", data["token"]), fmt.Sprintf("%s", data["login"]), false)
 					}
 				}
 			}

@@ -53,6 +53,7 @@ var (
 	Closed       bool
 	GistResponse map[string]interface{}
 	GithubToken  string
+	GithubLogin  string
 	HomeDir      = getHome()
 	Instructions []Lines
 	spinner      = spin.New("%s Working...")
@@ -200,7 +201,12 @@ var recordCmd = &cobra.Command{
 				return Error(fmt.Errorf("missing GitHub authentication token"))
 			}
 		}
-		fmt.Println(au.Bold("Initiating terminal recording..."))
+		GithubLogin = viper.GetString("login")
+		if len(GithubLogin) > 0 {
+			fmt.Println(au.Sprintf(au.Bold("Initiating terminal recording for %s..."), GithubLogin))
+		} else {
+			fmt.Println(au.Bold("Initiating terminal recording..."))
+		}
 
 		// Start recording Object.
 		ccmd := shell(cmd)
@@ -278,7 +284,7 @@ var recordCmd = &cobra.Command{
 			}
 		}(chn)
 
-		fmt.Println(au.Red(au.Bold("Recording started!\r\n")))
+		fmt.Println(au.Green(au.Bold("Recording started!\r\n")))
 
 		// Read from the PTY into a buffer.
 		rectime := time.Now()
