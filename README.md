@@ -2,6 +2,7 @@
 Terminal recording and playback, written in [Go]. All terminal recordings are currently saved as private [Gist] postings.
 
 ## Install
+#### Note: If [Go] is already installed, will use the currently installed version to install `termbacktime`.
 There is now an install script for Linux, Darwin, and Windows 10 using [WSL]. This will install go1.12.5 by default.
 For other distributions please see the [releases] page. [Go] will be installed in `/usr/local/go` and `$GOPATH` is set to `$HOME/go`.
 
@@ -16,6 +17,13 @@ To install a different version of [Go] besides v1.12.5:
 ```
 
 For example, `1.12.0` would be `sudo ./install.sh 1.12.0`
+
+If you already have [Go] installed, you can manually install:
+```shell
+go get -u github.com/termbacktime/termbacktime
+cd $GOPATH/src/github.com/termbacktime/termbacktime
+make install
+```
 
 ## Authorization
 In order to submit recordings to [Gist] you must first authorize termbacktime with GitHub.
