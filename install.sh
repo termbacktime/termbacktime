@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#  Install go and termbacktime.
+#  Locally install go and termbacktime.
 #
-#  sudo ./install.sh <optional go version>
+#  ./install.sh <optional go version>
 #
 #  Linux:  i386, x86-64, ARMv6, ARMv8
 #  Darwin: i386, x86-64
@@ -21,9 +21,18 @@ function installtbt() {
   termbacktime --version
 }
 
+if [ -n "`$SHELL -c 'echo $ZSH_VERSION'`" ]; then
+    # assume Zsh
+    shell_profile="zshrc"
+elif [ -n "`$SHELL -c 'echo $BASH_VERSION'`" ]; then
+    # assume Bash
+    shell_profile="bashrc"
+fi
+
 if [ -x "$(command -v go)" ]; then
-   echo "Go installed; installing termbacktime!"
-   go version
+   echo "Go found: $(go version)"
+   echo "Installing termbacktime to $GOPATH in 5 seconds..."
+   sleep 5
    echo ""
    installtbt
   else
@@ -32,31 +41,45 @@ if [ -x "$(command -v go)" ]; then
        GVERSION="$1"
    fi
    GOPATH="$HOME/go"
-   GOROOT="/usr/local/go"
+   GOROOT="$HOME/.goroot"
+   TMPDIR=$(mktemp -d -t goinstall-XXXXXXXXXX)
 
-   echo "Go not found; Attempting to install v${GVERSION} to ${GOROOT} (\$GOPATH = ${GOPATH}), please wait..."
+   echo "Installing Go to $GOROOT in 5 seconds..."
+   sleep 5
+   echo "Attempting to install v${GVERSION} to ${GOROOT} (\$GOPATH = ${GOPATH}), please wait..."
 
-   ARCH=`uname -m`
-   case "$ARCH" in
+   ARCHCASE=`uname -m`
+   case "$ARCHCASE" in
        i?86) ARCH="386" ;;
        x86_64) ARCH="amd64" ;;
        ARMv8) ARCH="arm64" ;;
        ARMv6) ARCH="armv6l" ;;
    esac
-   DIST=`uname -s`
-   case "$DIST" in
+   DISTCASE=`uname -s`
+   case "$DISTCASE" in
         Linux) DIST="linux" ;;
         Darwin) DIST="darwin" ;;
    esac
    GFILE="go$GVERSION.${DIST}-${ARCH}.tar.gz"
 
+   if [ -z "$ARCH" ]; then
+      echo "Detected invalid or missing OS architecture! Stopping."
+      exit 1;
+   fi
+   if [ -z "$DIST" ]; then
+      echo "Detected invalid or missing distribution! Stopping."
+      exit 1;
+   fi
+
+   echo "Detected $DISTCASE ($ARCHCASE) - Downloading $GFILE"
+
    if [ -d $GOROOT ]; then
-       echo "Installation directories already exist $GOROOT"
+       echo "Installation directories already exist $GOROOT -- removing."
        rm -rf "$GOROOT"
    fi
 
    mkdir -p "$GOROOT"
-   chmod 777 "$GOROOT"
+   chmod 755 "$GOROOT"
 
    wget --no-verbose https://storage.googleapis.com/golang/$GFILE -O $TMPDIR/$GFILE
    if [ $? -ne 0 ]; then
@@ -64,36 +87,35 @@ if [ -x "$(command -v go)" ]; then
        exit 1
    fi
 
-   tar -C "/usr/local" -xzf $TMPDIR/$GFILE
+   TMPEXT=$(mktemp -d -t go-extract-XXXXXXXXXX)
+   tar -C "$TMPEXT" -xzf $TMPDIR/$GFILE
+   mv $TMPEXT/go/* "$GOROOT"
 
-   if [ -f "$HOME/.gorc" ]; then
-      source "$HOME/.gorc"
-      sleep 1
-    else
-      touch "$HOME/.gorc"
-      {
-          echo '# Go paths'
-          echo 'export PATH=$PATH:/usr/local/go/bin'
-          echo 'export GOPATH=$HOME/go'
-          echo 'export PATH=$PATH:$GOPATH/bin'
-      } >> "$HOME/.gorc"
-      touch "$HOME/.bashrc"
-      {
-         echo ""
-         echo '# Source .gorc for Go paths'
-         echo 'source $HOME/.gorc'
-      } >> "$HOME/.bashrc"
-      sleep 1
-      source "$HOME/.gorc"
-      sleep 1
-   fi
+   # Cleanup shell profile
+   touch "$HOME/.${shell_profile}"
+   sed -i '/# Golang paths/d' "$HOME/.${shell_profile}"
+   sed -i '/export GOROOT/d' "$HOME/.${shell_profile}"
+   sed -i '/:$GOROOT/d' "$HOME/.${shell_profile}"
+   sed -i '/export GOPATH/d' "$HOME/.${shell_profile}"
+   sed -i '/:$GOPATH/d' "$HOME/.${shell_profile}"
+   {
+       echo '# Golang paths'
+       echo "export GOROOT=$GOROOT"
+       echo 'export PATH=$PATH:$GOROOT/bin'
+       echo 'export GOPATH=$HOME/go'
+       echo 'export PATH=$PATH:$GOPATH/bin'
+   } >> "$HOME/.${shell_profile}"
 
    echo "GOROOT set to $GOROOT"
    mkdir -p "$GOPATH" "$GOPATH/src" "$GOPATH/pkg" "$GOPATH/bin" "$GOPATH/out"
-   chmod 777 "$GOPATH" "$GOPATH/src" "$GOPATH/pkg" "$GOPATH/bin" "$GOPATH/out"
+   chmod 755 "$GOPATH" "$GOPATH/src" "$GOPATH/pkg" "$GOPATH/bin" "$GOPATH/out"
    echo "GOPATH set to $GOPATH"
 
+   echo "Running cleanup..."
+   sleep 2
+   source "$HOME/.${shell_profile}"
    rm -f $TMPDIR/$GFILE
+   rm -rf $TMPEXT
 
    if [ -x "$(command -v go)" ]; then
       echo "Go installed; installing termbacktime!"
@@ -101,5 +123,7 @@ if [ -x "$(command -v go)" ]; then
       installtbt
     else
       echo "Go still not found! Could not install termbacktime."
+      echo "Please try sourcing your shell profile and running install again."
+      echo -e "\n\tsource $HOME/.${shell_profile}\n"
    fi
 fi
