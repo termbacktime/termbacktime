@@ -3,7 +3,8 @@ GISTAPI=https://api.github.com/gists
 ABLYIO_TOKEN=Yn3xbQ.W4fPqA:_aZ8tpIGEPJXscWv
 GITURL=github.com/termbacktime/termbacktime
 APP_NAME=termbacktime
-VERSION=0.0.2-alpha
+GFILE_NAME=terminal-recording.json
+VERSION=0.0.3-alpha
 CONFIG_TYPE=json
 REV=`git rev-parse --short HEAD`
 BINARY_DARWIN=$(APP_NAME)-$(REV)-darwin
@@ -11,7 +12,7 @@ BINARY_UNIX=$(APP_NAME)-$(REV)-unix
 BINARY_FREEBSD=$(APP_NAME)-$(REV)-freebsd
 LDFLAGS=-ldflags "-X '${GITURL}/cmd.Application=${APP_NAME}' -X '${GITURL}/cmd.Version=${VERSION}' -X '${GITURL}/cmd.Revision=${REV}' \
 		-X '${GITURL}/cmd.PlaybackURL=${PBURL}'  -X '${GITURL}/cmd.GistAPI=${GISTAPI}' -X '${GITURL}/cmd.AblyToken=${ABLYIO_TOKEN}' \
-		-X '${GITURL}/cmd.ConfigType=${shell echo ${CONFIG_TYPE} | tr '[:upper:]' '[:lower:]'}'"
+		-X '${GITURL}/cmd.GistFileName=${GFILE_NAME}' -X '${GITURL}/cmd.ConfigType=${shell echo ${CONFIG_TYPE} | tr '[:upper:]' '[:lower:]'}'"
 
 build:
 	go build -o ./builds/$(APP_NAME) -v ${LDFLAGS}

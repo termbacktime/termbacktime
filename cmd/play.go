@@ -21,17 +21,88 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
+	"regexp"
+	"strings"
+	"time"
 
+	"github.com/caarlos0/spin"
 	"github.com/spf13/cobra"
 )
 
-// playCmd represents the auth command
+// playCmd represents the auth command.
 var playCmd = &cobra.Command{
-	Use:   "play",
-	Short: "Play terminal recordings.",
+	Use:   "play [hash]",
+	Short: "Play terminal recordings",
+	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return fmt.Errorf("command not yet implemented")
+		spinner = spin.New("%s Fetching Gist...")
+		spinner.Set(spin.Box1)
+		spinner.Start()
+		defer spinner.Stop()
+
+		match, _ := regexp.MatchString("^[a-fA-F0-9]{32}$", args[0])
+		if match == false {
+			return Error(fmt.Errorf("%s is not a valid Gist hash", args[0]))
+		}
+
+		u := fmt.Sprintf("%v/%v", GistAPI, args[0])
+		req, err := http.NewRequest("GET", u, nil)
+		if err != nil {
+			return Error(err)
+		}
+
+		var gist GetGist
+
+		var client = &http.Client{Timeout: 10 * time.Second}
+		resp, err := client.Do(req)
+		if err != nil {
+			return Error(err)
+		}
+
+		err = json.NewDecoder(resp.Body).Decode(&gist)
+		if err != nil {
+			return Error(fmt.Errorf("response JSON error: %v", err))
+		}
+
+		var rec Recording
+		err = json.NewDecoder(strings.NewReader(gist.Files[GistFileName].Content)).Decode(&rec)
+		if err != nil {
+			return Error(fmt.Errorf("could not read %s: %v", GistFileName, err))
+		}
+
+		data, err := uncompress(rec.Pack)
+		if err != nil {
+			return Error(err)
+		}
+
+		spinner.Stop()
+
+		var lines []Lines
+		err = json.NewDecoder(strings.NewReader(data)).Decode(&lines)
+		if err != nil {
+			return Error(fmt.Errorf("could not load recording data from Gist: %v", err))
+		}
+
+		fmt.Print("Starting playback!\r\n\r\n")
+		for _, line := range lines {
+			if line.Command == "s" {
+				os.Stdout.WriteString(fmt.Sprintf("\033[8;%d;%dt", line.Sizes[1], line.Sizes[0]))
+			} else {
+				if line.Time > 0 {
+					time.Sleep(time.Duration(line.Time) * time.Millisecond)
+				}
+				for _, out := range line.Lines {
+					os.Stdout.WriteString(fmt.Sprintf("%v", out))
+				}
+			}
+		}
+		fmt.Println("\r\nPlayback finished.")
+
+		return nil
 	},
 }
 

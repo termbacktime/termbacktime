@@ -21,7 +21,6 @@
 package cmd
 
 import (
-	"crypto/rand"
 	"fmt"
 	"os"
 	"time"
@@ -29,40 +28,9 @@ import (
 	"github.com/ably/ably-go/ably"
 	au "github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-func uuid() string {
-	b := make([]byte, 16)
-	_, _ = rand.Read(b)
-	return fmt.Sprintf("%x-%x-%x%x-%x%x-%x", b[0:4], b[4:6], (b[6]&0x0f)|0x40, b[7:8], (b[8]&0x3f)|0x80, b[9:10], b[10:])
-}
-
-func saveToken(tkn string, usr string, man bool) {
-	if man {
-		fmt.Printf("Saving token: %s\r\n", tkn)
-	}
-	viper.Set("token", tkn)
-	if len(usr) > 0 {
-		viper.Set("login", usr)
-	}
-	if err := viper.WriteConfig(); err == nil {
-		fmt.Println(au.Sprintf(au.Bold("Saved config: %s"), viper.ConfigFileUsed()))
-		os.Exit(0)
-	} else {
-		fmt.Println(au.Sprintf(au.Bold(au.Red("Error: %v")), err))
-		os.Exit(1)
-	}
-}
-
-func colorify(str string, t int) string {
-	if t >= 11 {
-		return au.Sprintf(au.Bold(str), au.Bold(au.Green(t)))
-	}
-	return au.Sprintf(au.Bold(str), au.Bold(au.Red(t)))
-}
-
-// authCmd represents the auth command
+// authCmd represents the auth command.
 var authCmd = &cobra.Command{
 	Use:   "auth",
 	Short: "Manage GitHub API authentication",

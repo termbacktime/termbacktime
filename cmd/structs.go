@@ -20,6 +20,8 @@
 
 package cmd
 
+import "time"
+
 // Recording JSON struct for recordings.
 type Recording struct {
 	Info    Info    `json:"i"`
@@ -38,16 +40,16 @@ type Lines struct {
 	Sizes   []int    `json:"s,omitempty"`
 }
 
-// GistFile is the top-level struct for a gist file.
-type GistFile struct {
+// GistFiles is the top-level struct for gist files.
+type GistFiles struct {
 	Content string `json:"content"`
 }
 
 // Gist is the required structure for POST data for API purposes.
 type Gist struct {
-	Description string              `json:"description,omitempty"`
-	Public      bool                `json:"public,omitempty"`
-	GistFile    map[string]GistFile `json:"files,omitempty"`
+	Description string               `json:"description,omitempty"`
+	Public      bool                 `json:"public,omitempty"`
+	GistFiles   map[string]GistFiles `json:"files,omitempty"`
 }
 
 // Info is the distro information.
@@ -55,4 +57,30 @@ type Info struct {
 	Arch string `json:"a"`
 	OS   string `json:"o"`
 	Go   string `json:"v"`
+}
+
+// GetGist represents a GitHub's gist API response.
+type GetGist struct {
+	ID          string                 `json:"id,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	Public      bool                   `json:"public,omitempty"`
+	Owner       map[string]interface{} `json:"owner,omitempty"`
+	Files       map[string]GistFile    `json:"files,omitempty"`
+	Comments    int                    `json:"comments,omitempty"`
+	HTMLURL     string                 `json:"html_url,omitempty"`
+	GitPullURL  string                 `json:"git_pull_url,omitempty"`
+	GitPushURL  string                 `json:"git_push_url,omitempty"`
+	CreatedAt   time.Time              `json:"created_at,omitempty"`
+	UpdatedAt   time.Time              `json:"updated_at,omitempty"`
+	NodeID      string                 `json:"node_id,omitempty"`
+}
+
+// GistFile represents a file in a gist.
+type GistFile struct {
+	Size     int    `json:"size,omitempty"`
+	Filename string `json:"filename,omitempty"`
+	Language string `json:"language,omitempty"`
+	Type     string `json:"type,omitempty"`
+	RawURL   string `json:"raw_url,omitempty"`
+	Content  string `json:"content,omitempty"`
 }

@@ -21,14 +21,9 @@
 package cmd
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -41,7 +36,6 @@ import (
 	"github.com/caarlos0/spin"
 	"github.com/kr/pty"
 	au "github.com/logrusorgru/aurora"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh/terminal"
@@ -59,141 +53,10 @@ var (
 	spinner      = spin.New("%s Working...")
 )
 
-func (r *Recording) setTerminalDimensions(init bool) {
-	if Width, Height, err := terminal.GetSize(int(os.Stdout.Fd())); err != nil {
-		log.Println(err)
-	} else {
-		if init == true {
-			r.Sizes = []int{Width, Height}
-		} else {
-			Instructions = append(Instructions, Lines{
-				Command: "s",
-				Sizes:   []int{Width, Height},
-			})
-		}
-	}
-}
-
-// TODO: Improve shell detection.
-func shell(cmd *cobra.Command) string {
-	shell := cmd.Flag("shell").Value.String()
-	if len(shell) > 0 {
-		return shell
-	} else if os.Getenv("SHELL") != "" {
-		return os.Getenv("SHELL")
-	}
-	return "/bin/bash"
-}
-
-func compress(rec []Lines) (string, error) {
-	cmds, err := json.Marshal(rec)
-	if err != nil {
-		return "", err
-	}
-	var b bytes.Buffer
-	gz := gzip.NewWriter(&b)
-	if _, err := gz.Write([]byte(cmds)); err != nil {
-		return "", err
-	}
-	if err := gz.Flush(); err != nil {
-		return "", err
-	}
-	if err := gz.Close(); err != nil {
-		return "", err
-	}
-
-	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
-}
-
-func upload(rec Recording, cmd *cobra.Command) error {
-	spinner = spin.New("%s Uploading to Gist...")
-	spinner.Set(spin.Box1)
-	spinner.Start()
-	defer spinner.Stop()
-
-	compressed, err := compress(Instructions)
-	if err != nil {
-		return Error(fmt.Errorf("gzip failed: %v", err))
-	}
-
-	rec.Pack = compressed
-	jsn, err := json.MarshalIndent(rec, "", "\t")
-	if err != nil {
-		return Error(fmt.Errorf("could not generate JSON: %v", err))
-	}
-
-	file, err := json.Marshal(Gist{
-		Description: fmt.Sprintf("Created with %s", PlaybackURL),
-		GistFile: map[string]GistFile{
-			"terminal-recording.json": GistFile{string(jsn)},
-		},
-		Public: false,
-	})
-	if err != nil {
-		return Error(fmt.Errorf("could not generate Gist: %v", err))
-	}
-
-	req, err := http.NewRequest("POST", GistAPI, bytes.NewBuffer(file))
-	if err != nil {
-		return Error(fmt.Errorf("cannot create request: %v", err))
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", GithubToken))
-
-	client := http.Client{}
-	response, err := client.Do(req)
-	if err != nil {
-		return Error(fmt.Errorf("request HTTP error: %v", err))
-	}
-	defer response.Body.Close()
-	err = json.NewDecoder(response.Body).Decode(&GistResponse)
-	if err != nil {
-		return Error(fmt.Errorf("response JSON error: %v", err))
-	}
-
-	spinner.Stop()
-
-	if _, ok := GistResponse["html_url"]; !ok {
-		fmt.Println(au.Sprintf(au.Bold(au.Red("\r\nAPI Error: %v\r\n")), GistResponse["message"]))
-
-		if a, ok := GistResponse["errors"]; ok {
-			for i, m := range a.([]interface{}) {
-				for k, v := range m.(map[string]interface{}) {
-					fmt.Printf("%d %s: %s\r\n", i, k, v)
-				}
-			}
-		}
-
-		return Error(fmt.Errorf("please check authentication: %s/auth/", PlaybackURL))
-	}
-
-	fmt.Println(au.Sprintf(au.Bold("\r\nGist: %s"), GistResponse["html_url"]))
-	fmt.Println(au.Sprintf(au.Bold("Playback: %s/p/%s"), PlaybackURL, GistResponse["id"]))
-
-	// Update the Gist description, we don't care about errors here.
-	if patch, err := json.Marshal(Gist{Description: fmt.Sprintf("Created with %s/p/%s", PlaybackURL, GistResponse["id"])}); err == nil {
-		if req, err = http.NewRequest("PATCH", fmt.Sprintf("%s/%s", GistAPI, GistResponse["id"]), bytes.NewBuffer(patch)); err == nil {
-			req.Header.Set("Content-Type", "application/json")
-			req.Header.Set("Accept", "application/json")
-			req.Header.Set("Authorization", fmt.Sprintf("token %s", GithubToken))
-			client = http.Client{}
-			_, _ = client.Do(req)
-		}
-	}
-
-	return nil
-}
-
-// Error stops the spinner whenever an error is thrown.
-func Error(err error) error {
-	spinner.Stop()
-	return fmt.Errorf("%v\r\n ", err)
-}
-
+// recordCmd handles terminal recording.
 var recordCmd = &cobra.Command{
 	Use:   Application,
-	Short: fmt.Sprintf("Terminal Recorder - v%s-%s - %s/", Version, Revision, PlaybackURL),
+	Short: fmt.Sprintf("%s - %s/ - version=%s revision=%s (%s)\r\n", Application, PlaybackURL, Version, Revision, runtime.Version()),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(GithubToken) <= 0 {
 			GithubToken = viper.GetString("token")
@@ -293,11 +156,6 @@ var recordCmd = &cobra.Command{
 		for {
 			nr, err := ptmx.Read(bufout)
 			if err != nil {
-				if err == io.EOF {
-					err = nil
-				} else {
-					log.Println(err)
-				}
 				break
 			}
 
@@ -369,32 +227,8 @@ func init() {
 	viper.SetConfigType(ConfigType)
 	cobra.OnInitialize(initConfig)
 	recordCmd.Version = Version
-	recordCmd.SetVersionTemplate(fmt.Sprintf("%s - version=%s revision=%s (%s)\r\n", Application, Version, Revision, runtime.Version()))
+	recordCmd.SetVersionTemplate(fmt.Sprintf("%s - %s/ - version=%s revision=%s (%s)\r\n", Application, PlaybackURL, Version, Revision, runtime.Version()))
 	recordCmd.Flags().StringP("shell", "s", os.Getenv("SHELL"), "set the shell to use for recording")
 	recordCmd.PersistentFlags().StringVar(&GithubToken, "token", "", "use the specified GitHub authentication token")
 	recordCmd.PersistentFlags().StringVar(&cfgFile, "config", fmt.Sprintf("%s%s.termbacktime.%s", HomeDir, string(os.PathSeparator), ConfigType), "config file")
-}
-
-func getHome() string {
-	home, err := homedir.Dir()
-	if err != nil {
-		fmt.Println(au.Sprintf(au.Bold(au.Red("Could not find home dir: %v\r\n")), err))
-		os.Exit(1)
-	}
-	return home
-}
-
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		viper.SetConfigName(".termbacktime")
-		viper.AddConfigPath(HomeDir)
-		viper.AddConfigPath(".")
-	}
-	viper.AutomaticEnv()
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println(au.Sprintf(au.Bold("Loaded config: %s"), viper.ConfigFileUsed()))
-	}
 }
