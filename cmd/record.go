@@ -229,6 +229,7 @@ func init() {
 	recordCmd.Version = Version
 	recordCmd.SetVersionTemplate(fmt.Sprintf("%s - %s/ - version=%s revision=%s (%s)\r\n", Application, PlaybackURL, Version, Revision, runtime.Version()))
 	recordCmd.Flags().StringP("shell", "s", os.Getenv("SHELL"), "set the shell to use for recording")
+	recordCmd.Flags().BoolP("open", "", false, "open recording playback in default browser after save")
 	recordCmd.PersistentFlags().StringVar(&GithubToken, "token", "", "use the specified GitHub authentication token")
 	recordCmd.PersistentFlags().StringVar(&cfgFile, "config", fmt.Sprintf("%s%s.termbacktime.%s", HomeDir, string(os.PathSeparator), ConfigType), "config file")
 }

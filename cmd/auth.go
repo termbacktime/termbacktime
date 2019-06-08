@@ -27,6 +27,7 @@ import (
 
 	"github.com/ably/ably-go/ably"
 	au "github.com/logrusorgru/aurora"
+	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 )
 
@@ -53,7 +54,10 @@ var authCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			fmt.Printf("Please authorize %s with GitHub: %s/auth/#%s\r\n", Application, PlaybackURL, chn)
+			AuthURL := fmt.Sprintf("%s/auth/#%s", PlaybackURL, chn)
+			if err := browser.OpenURL(AuthURL); err != nil {
+				fmt.Printf("Please authorize %s with GitHub: %s\r\n", Application, AuthURL)
+			}
 
 			go func() {
 				ticker := time.Tick(time.Second)

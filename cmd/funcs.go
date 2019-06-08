@@ -35,6 +35,7 @@ import (
 	"github.com/caarlos0/spin"
 	au "github.com/logrusorgru/aurora"
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh/terminal"
@@ -100,7 +101,7 @@ func uncompress(data string) (string, error) {
 func getHome() string {
 	home, err := homedir.Dir()
 	if err != nil {
-		fmt.Println(au.Sprintf(au.Bold(au.Red("Could not find home dir: %v\r\n")), err))
+		fmt.Println(au.Sprintf(au.Bold(au.Red("Error: could not find home dir: %v\r\n")), err))
 		os.Exit(1)
 	}
 	return home
@@ -189,7 +190,7 @@ func upload(rec Recording, cmd *cobra.Command) error {
 	}
 
 	file, err := json.Marshal(Gist{
-		Description: fmt.Sprintf("Created with %s", PlaybackURL),
+		Description: fmt.Sprintf("Created with %s/", PlaybackURL),
 		GistFiles: map[string]GistFiles{
 			GistFileName: GistFiles{string(jsn)},
 		},
@@ -234,9 +235,14 @@ func upload(rec Recording, cmd *cobra.Command) error {
 		return Error(fmt.Errorf("please check authentication: %s/auth/", PlaybackURL))
 	}
 
+	PlayURL := fmt.Sprintf("%s/p/%s", PlaybackURL, GistResponse["id"])
 	fmt.Println(au.Sprintf("\r\n%s: %s play %s", au.Bold("Recording saved"), Application, GistResponse["id"]))
 	fmt.Println(au.Sprintf("%s: %s", au.Bold("Gist"), GistResponse["html_url"]))
-	fmt.Println(au.Sprintf("%s: %s/p/%s", au.Bold("Playback"), PlaybackURL, GistResponse["id"]))
+	fmt.Println(au.Sprintf("%s: %s", au.Bold("Playback"), PlayURL))
+
+	if cmd.Flags().Changed("open") {
+		_ = browser.OpenURL(PlayURL)
+	}
 
 	// Update the Gist description, we don't care about errors here.
 	if patch, err := json.Marshal(Gist{Description: fmt.Sprintf("Created with %s/p/%s", PlaybackURL, GistResponse["id"])}); err == nil {
