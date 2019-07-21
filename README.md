@@ -8,7 +8,7 @@ https://termbackti.me/p/1fc1b6cd6317180d01f60b3011490e75
 
 ## Install
 #### Note: If [Go] is already installed, will use the currently installed version to install `termbacktime`.
-There is now an install script for Linux, Darwin, and Windows 10 using [WSL]. This will install go1.12.5 locally by default. For other distributions please see the [releases] page. [Go] will be installed in `$HOME/.goroot` as `$GOROOT` and `$GOPATH` is set to `$HOME/go`.
+There is now an install script for Linux, Darwin, and Windows 10 using [WSL]. This will install go1.12.7 locally by default. For other distributions please see the [releases] page. [Go] will be installed in `$HOME/.goroot` as `$GOROOT` and `$GOPATH` is set to `$HOME/go`.
 
 ```shell
 curl -s -L https://github.com/termbacktime/termbacktime/raw/master/install.sh | bash
