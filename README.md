@@ -14,7 +14,7 @@ There is now an install script for Linux, Darwin, and Windows 10 using [WSL]. Th
 curl -s -L https://github.com/termbacktime/termbacktime/raw/master/install.sh | bash
 ```
 
-To install a different version of [Go] besides v1.12.5:
+To install a different version of [Go] besides v1.12.7:
 ```shell
  wget https://github.com/termbacktime/termbacktime/raw/master/install.sh
  ./install.sh <version>

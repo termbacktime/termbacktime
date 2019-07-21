@@ -36,7 +36,7 @@ if [ -x "$(command -v go)" ]; then
    echo ""
    installtbt
   else
-   GVERSION="1.12.5"
+   GVERSION="1.12.7"
    if [ $1 ]; then
        GVERSION="$1"
    fi
