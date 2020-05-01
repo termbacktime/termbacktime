@@ -117,11 +117,19 @@ else
 
     # Cleanup shell profile
     touch "$HOME/.${SHELL_PROFILE}"
-    sed -i '' '/# Golang paths/d' "$HOME/.${SHELL_PROFILE}"
-    sed -i '' '/export GOROOT/d' "$HOME/.${SHELL_PROFILE}"
-    sed -i '' '/:$GOROOT/d' "$HOME/.${SHELL_PROFILE}"
-    sed -i '' '/export GOPATH/d' "$HOME/.${SHELL_PROFILE}"
-    sed -i '' '/:$GOPATH/d' "$HOME/.${SHELL_PROFILE}"
+    if [ "$(uname)" == "Darwin" ]; then
+        sed -i '' '/# Golang paths/d' "$HOME/.${SHELL_PROFILE}"
+        sed -i '' '/export GOROOT/d' "$HOME/.${SHELL_PROFILE}"
+        sed -i '' '/:$GOROOT/d' "$HOME/.${SHELL_PROFILE}"
+        sed -i '' '/export GOPATH/d' "$HOME/.${SHELL_PROFILE}"
+        sed -i '' '/:$GOPATH/d' "$HOME/.${SHELL_PROFILE}"
+    else
+        sed -i '/# Golang paths/d' "$HOME/.${SHELL_PROFILE}"
+        sed -i '/export GOROOT/d' "$HOME/.${SHELL_PROFILE}"
+        sed -i '/:$GOROOT/d' "$HOME/.${SHELL_PROFILE}"
+        sed -i '/export GOPATH/d' "$HOME/.${SHELL_PROFILE}"
+        sed -i '/:$GOPATH/d' "$HOME/.${SHELL_PROFILE}"
+    fi
     {
         echo '# Golang paths'
         echo "export GOROOT=$GOROOT"
