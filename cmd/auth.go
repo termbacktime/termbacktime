@@ -80,7 +80,6 @@ var authCmd = &cobra.Command{
 					}
 					if len(r.Token) > 0 {
 						fmt.Printf("\rLogged in as %s - Token: %s\r\n", r.Login, r.Token)
-						close(done)
 						saveToken(fmt.Sprintf("%s", r.Token), fmt.Sprintf("%s", r.Login), false)
 					}
 				}
