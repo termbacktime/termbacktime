@@ -23,9 +23,10 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"time"
 
-	"github.com/ably/ably-go/ably"
+	"github.com/gorilla/websocket"
 	au "github.com/logrusorgru/aurora"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
@@ -40,19 +41,16 @@ var authCmd = &cobra.Command{
 		if len(tkn) > 0 {
 			saveToken(tkn, "", true)
 		} else {
-			client, err := ably.NewRealtimeClient(ably.NewClientOptions(AblyToken))
-			if err != nil {
-				fmt.Println(au.Sprintf(au.Red("Error: %v"), err))
-				os.Exit(1)
-			}
+			interrupt := make(chan os.Signal, 1)
+			signal.Notify(interrupt, os.Interrupt)
 
 			chn := fmt.Sprintf("tbt:%s", uuid())
-			channel := client.Channels.Get(chn)
-			sub, err := channel.Subscribe()
+			client, resp, err := websocket.DefaultDialer.Dial(fmt.Sprintf("%s/auth?token=%s", Broker, chn), nil)
 			if err != nil {
-				fmt.Println(au.Sprintf(au.Red("Error: %v"), err))
+				fmt.Println(au.Sprintf(au.Red("\nError: %v (status code: %d)\n"), err, resp.StatusCode))
 				os.Exit(1)
 			}
+			defer client.Close()
 
 			AuthURL := fmt.Sprintf("%s/auth/#%s", PlaybackURL, chn)
 			if err := browser.OpenURL(AuthURL); err != nil {
@@ -70,12 +68,35 @@ var authCmd = &cobra.Command{
 				os.Exit(1)
 			}()
 
-			for msg := range sub.MessageChannel() {
-				if data, ok := msg.Data.(map[string]interface{}); ok {
-					if data["login"] != "" {
-						fmt.Printf("\rLogged in as %s - Token: %s\r\n", data["login"], data["token"])
-						saveToken(fmt.Sprintf("%s", data["token"]), fmt.Sprintf("%s", data["login"]), false)
+			done := make(chan struct{})
+
+			go func() {
+				for {
+					defer close(done)
+					var r AuthResponse
+					if err := client.ReadJSON(&r); err != nil {
+						fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
+						return
 					}
+					if len(r.Token) > 0 {
+						fmt.Printf("\rLogged in as %s - Token: %s\r\n", r.Login, r.Token)
+						close(done)
+						saveToken(fmt.Sprintf("%s", r.Token), fmt.Sprintf("%s", r.Login), false)
+					}
+				}
+			}()
+
+			for {
+				select {
+				case <-done:
+					return
+				case <-interrupt:
+					client.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+					select {
+					case <-done:
+					case <-time.After(time.Second):
+					}
+					return
 				}
 			}
 		}

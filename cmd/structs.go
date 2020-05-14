@@ -84,3 +84,9 @@ type GistFile struct {
 	RawURL   string `json:"raw_url,omitempty"`
 	Content  string `json:"content,omitempty"`
 }
+
+// AuthResponse represents the WebSocket response from the broker
+type AuthResponse struct {
+	Token string `json:"token"`
+	Login string `json:"login"`
+}

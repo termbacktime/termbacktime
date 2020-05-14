@@ -1,17 +1,17 @@
 PBURL=https://termbackti.me
+BROKER=wss://broker.termbackti.me
 GISTAPI=https://api.github.com/gists
-ABLYIO_TOKEN=Yn3xbQ.W4fPqA:_aZ8tpIGEPJXscWv
 GITURL=github.com/termbacktime/termbacktime
 APP_NAME=termbacktime
 GFILE_NAME=terminal-recording.json
-VERSION=0.0.4-alpha
+VERSION=0.0.5-alpha
 CONFIG_TYPE=json
 REV=`git rev-parse --short HEAD`
 BINARY_DARWIN=$(APP_NAME)-$(REV)-darwin
 BINARY_UNIX=$(APP_NAME)-$(REV)-unix
 BINARY_FREEBSD=$(APP_NAME)-$(REV)-freebsd
 LDFLAGS=-ldflags "-X '${GITURL}/cmd.Application=${APP_NAME}' -X '${GITURL}/cmd.Version=${VERSION}' -X '${GITURL}/cmd.Revision=${REV}' \
-		-X '${GITURL}/cmd.PlaybackURL=${PBURL}'  -X '${GITURL}/cmd.GistAPI=${GISTAPI}' -X '${GITURL}/cmd.AblyToken=${ABLYIO_TOKEN}' \
+		-X '${GITURL}/cmd.PlaybackURL=${PBURL}'  -X '${GITURL}/cmd.GistAPI=${GISTAPI}' -X '${GITURL}/cmd.Broker=${BROKER}' \
 		-X '${GITURL}/cmd.GistFileName=${GFILE_NAME}' -X '${GITURL}/cmd.ConfigType=${shell echo ${CONFIG_TYPE} | tr '[:upper:]' '[:lower:]'}'"
 
 build:
