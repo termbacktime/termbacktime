@@ -72,7 +72,7 @@ var recordCmd = &cobra.Command{
 		}
 
 		// Start recording Object.
-		ccmd := shell(cmd)
+		ccmd := shell()
 		rec := Recording{
 			Info: Info{
 				Arch: runtime.GOARCH,
@@ -207,8 +207,8 @@ var recordCmd = &cobra.Command{
 						fmt.Printf(au.Sprintf(au.Bold("\r\nSave to Gist? [y/n]: ")))
 					}
 				}
-			case <-time.After(10 * time.Second):
-				fmt.Println(au.Bold("\r\n[bold]Ten second timeout hit, exiting..."))
+			case <-time.After(30 * time.Second):
+				fmt.Println(au.Bold("\r\nUpload timeout; exiting..."))
 				break stdinloop
 			}
 		}

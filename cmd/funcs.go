@@ -43,11 +43,8 @@ import (
 
 // shell attempts to return the users terminal shell.
 // TODO: Improve shell detection.
-func shell(cmd *cobra.Command) string {
-	shell := cmd.Flag("shell").Value.String()
-	if len(shell) > 0 {
-		return shell
-	} else if os.Getenv("SHELL") != "" {
+func shell() string {
+	if os.Getenv("SHELL") != "" {
 		return os.Getenv("SHELL")
 	}
 	return "/bin/bash"
@@ -192,7 +189,7 @@ func upload(rec Recording, cmd *cobra.Command) error {
 	file, err := json.Marshal(Gist{
 		Description: fmt.Sprintf("Created with %s/", PlaybackURL),
 		GistFiles: map[string]GistFiles{
-			GistFileName: GistFiles{string(jsn)},
+			GistFileName: {string(jsn)},
 		},
 		Public: false,
 	})
