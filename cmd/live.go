@@ -22,19 +22,251 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"log"
+	"os"
+	"os/exec"
+	"os/signal"
+	"syscall"
+	"time"
 
+	"github.com/creack/pty"
+	"github.com/gorilla/websocket"
+	au "github.com/logrusorgru/aurora"
+	"github.com/pion/webrtc/v2"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
+)
+
+var (
+	webrtcConfig = webrtc.Configuration{
+		ICEServers: []webrtc.ICEServer{
+			{URLs: []string{STUNServerOne}},
+			{URLs: []string{STUNServerTwo}},
+		},
+	}
+	streaming   = false
+	dataChannel *webrtc.DataChannel
 )
 
 // liveCmd represents the auth command
 var liveCmd = &cobra.Command{
 	Use:   "live",
-	Short: "Live stream terminal with WebRTC to browser",
+	Short: "Live share your terminal with WebRTC to a browser (BETA)",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return fmt.Errorf("command not yet implemented")
+		stopTicker := make(chan bool, 1)
+		closeWebsocket := make(chan bool, 1)
+		interrupt := make(chan os.Signal, 1)
+		signal.Notify(interrupt, os.Interrupt)
+
+		chn := fmt.Sprintf("tbt:%s", uuid())
+		client, resp, err := websocket.DefaultDialer.Dial(fmt.Sprintf("%s/live?token=%s", Broker, chn), nil)
+		if err != nil {
+			fmt.Println(au.Sprintf(au.Red("\nError: %v (status code: %s)\n"), err, resp.StatusCode))
+			os.Exit(1)
+		}
+		defer client.Close()
+
+		peerConnection, err := webrtc.NewPeerConnection(webrtcConfig)
+		if err != nil {
+			fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
+			os.Exit(1)
+		}
+
+		dataChannel, err = peerConnection.CreateDataChannel("live-terminal", nil)
+		if err != nil {
+			fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
+			os.Exit(1)
+		}
+
+		offer, err := peerConnection.CreateOffer(nil)
+		if err != nil {
+			fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
+			os.Exit(1)
+		}
+
+		err = peerConnection.SetLocalDescription(offer)
+		if err != nil {
+			fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
+			os.Exit(1)
+		}
+
+		encoded, err := EncodeOffer(offer)
+		if err != nil {
+			fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
+			os.Exit(1)
+		}
+
+		dataChannel.OnOpen(func() {
+			if streaming == false {
+				startpty()
+			}
+		})
+
+		fmt.Println(au.Sprintf(au.Bold("\nLive playback: %s\r"), fmt.Sprintf("%s/live/#%s", PlaybackURL, chn)))
+
+		go func() {
+			ticker := time.NewTicker(1 * time.Second)
+			cdown := 120
+			for {
+				select {
+				case <-ticker.C:
+					if cdown <= 0 {
+						fmt.Printf("\n%v\r\n", au.Bold(au.Red("Live timed out, please try again!")))
+						os.Exit(1)
+					}
+					fmt.Printf("\r%s", colorify("Waiting for connection; timeout in %d seconds...", cdown))
+					cdown = cdown - 1
+				case <-stopTicker:
+					fmt.Printf(" %s\r\n\r\n", au.Bold(au.Green("Connected.")))
+					return
+				}
+			}
+		}()
+
+		done := make(chan struct{})
+		go func() {
+			for {
+				defer close(done)
+				var l LiveResponse
+				if err := client.ReadJSON(&l); err != nil {
+					fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
+					return
+				}
+				if l.Connected {
+					stopTicker <- true
+					if err := client.WriteJSON(&LiveOffer{Offer: encoded}); err != nil {
+						fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
+						os.Exit(1)
+					}
+				} else if len(l.Answer) > 0 {
+					answer := webrtc.SessionDescription{}
+					DecodeAnswer(l.Answer, &answer)
+					err = peerConnection.SetRemoteDescription(answer)
+					close(closeWebsocket)
+					select {}
+				}
+			}
+		}()
+
+		for {
+			select {
+			case <-closeWebsocket:
+				client.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			case <-done:
+				return nil
+			case <-interrupt:
+				client.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				select {
+				case <-done:
+				case <-time.After(time.Second):
+				}
+				return nil
+			}
+		}
 	},
 }
 
 func init() {
 	recordCmd.AddCommand(liveCmd)
+}
+
+func startpty() {
+	streaming = true
+
+	// Get shell command
+	ccmd := shell()
+
+	// Start PTY.
+	fmt.Println(au.Sprintf(au.Bold("Launching PTY session (%s)..."), ccmd))
+
+	pcmd := exec.Command(ccmd)
+	ptmx, err := pty.Start(pcmd)
+	if err != nil {
+		fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
+		os.Exit(1)
+	}
+
+	go func() {
+		defer func() {
+			ptmx.Close()
+		}()
+		pcmd.Wait()
+		Closed = true
+	}()
+
+	// Terminal resize.
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGWINCH)
+	go func() {
+		for range ch {
+			if err := pty.InheritSize(os.Stdin, ptmx); err == nil {
+				if Width, Height, err := terminal.GetSize(int(os.Stdout.Fd())); err == nil {
+					_ = dataChannel.SendText(ToJSON(LiveLine{
+						Command: "s",
+						Sizes:   []int{Width, Height},
+					}))
+				}
+			}
+		}
+	}()
+	ch <- syscall.SIGWINCH
+
+	// Set terminal to raw.
+	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
+		os.Exit(1)
+	}
+	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }()
+
+	// Write STDIN to PTY.
+	chn := make(chan string)
+	go func(ch chan string) {
+		bufin := make([]byte, 2048)
+		for {
+			nr, err := os.Stdin.Read(bufin)
+			if err != nil {
+				if err == io.EOF {
+					err = nil
+				} else {
+					log.Println(err)
+				}
+				break
+			}
+			if !Closed {
+				if _, err = ptmx.Write(bufin[0:nr]); err != nil {
+					break
+				}
+			} else {
+				chn <- string(bufin[0:nr])
+			}
+		}
+	}(chn)
+
+	// XXX: Send this over the data channel?
+	fmt.Println(au.Green(au.Bold("Live streaming started!\r\n")))
+
+	// Read from the PTY into a buffer.
+	bufout := make([]byte, 4096)
+	for {
+		nr, err := ptmx.Read(bufout)
+		if err != nil {
+			break
+		}
+		// Get the current line
+		line := string(bufout[0:nr])
+
+		// Send the line over the data channel
+		dataChannel.SendText(ToJSON(LiveLine{
+			Lines: []string{line},
+		}))
+
+		// Write to STDOUT
+		os.Stdout.WriteString(line)
+	}
+
+	_ = terminal.Restore(int(os.Stdin.Fd()), oldState)
+	fmt.Println(au.Bold(au.Green("\r\nLive streaming ended!")))
+	os.Exit(0)
 }

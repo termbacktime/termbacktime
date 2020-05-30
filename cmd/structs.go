@@ -90,3 +90,21 @@ type AuthResponse struct {
 	Token string `json:"token"`
 	Login string `json:"login"`
 }
+
+// LiveResponse represents the WebSocket response from the broker
+type LiveResponse struct {
+	Connected bool   `json:"connected"`
+	Answer    string `json:"answer"`
+}
+
+// LiveOffer creates SDP offers
+type LiveOffer struct {
+	Offer string `json:"offer"`
+}
+
+// LiveLine is for live terminal streaming
+type LiveLine struct {
+	Command string   `json:"c,omitempty"`
+	Lines   []string `json:"l,omitempty"`
+	Sizes   []int    `json:"s,omitempty"`
+}

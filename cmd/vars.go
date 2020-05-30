@@ -22,12 +22,14 @@ package cmd
 
 // Export default compile settings.
 var (
-	GistFileName = "terminal-recording.json"
-	Application  = "termbacktime"
-	GistAPI      = "https://api.github.com/gists"
-	PlaybackURL  = "https://termbackti.me"
-	Broker		 = "wss://broker.termbackti.me"
-	Revision     = "0000000"
-	Version      = "0.0.0"
-	ConfigType   = "json"
+	GistFileName  = "terminal-recording.json"
+	Application   = "termbacktime"
+	GistAPI       = "https://api.github.com/gists"
+	PlaybackURL   = "https://termbackti.me"
+	Broker        = "wss://broker.termbackti.me"
+	Revision      = "0000000"
+	Version       = "0.0.0"
+	ConfigType    = "json"
+	STUNServerOne = "stun:stun1.l.google.com:19302"
+	STUNServerTwo = "stun:stun2.l.google.com:19302"
 )

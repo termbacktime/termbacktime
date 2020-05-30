@@ -254,3 +254,34 @@ func upload(rec Recording, cmd *cobra.Command) error {
 
 	return nil
 }
+
+// ToJSON converts interface to JSON
+func ToJSON(obj interface{}) string {
+	jsn, _ := json.Marshal(obj)
+
+	return string(jsn)
+}
+
+// EncodeOffer encodes WebRTC offer in base64
+func EncodeOffer(obj interface{}) (string, error) {
+	b, err := json.Marshal(obj)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(b), nil
+}
+
+// DecodeAnswer decodes WebRTC answer from base64
+func DecodeAnswer(in string, obj interface{}) (interface{}, error) {
+	b, err := base64.StdEncoding.DecodeString(in)
+	if err != nil {
+		return obj, err
+	}
+
+	if err = json.Unmarshal(b, obj); err != nil {
+		return obj, err
+	}
+
+	return obj, nil
+}
