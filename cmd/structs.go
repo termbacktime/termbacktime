@@ -99,7 +99,8 @@ type LiveResponse struct {
 
 // LiveOffer creates SDP offers
 type LiveOffer struct {
-	Offer string `json:"offer"`
+	Offer string      `json:"offer"`
+	TURN  *TURNServer `json:"turn,omitempty"`
 }
 
 // LiveLine is for live terminal streaming
@@ -107,4 +108,18 @@ type LiveLine struct {
 	Command string   `json:"c,omitempty"`
 	Lines   []string `json:"l,omitempty"`
 	Sizes   []int    `json:"s,omitempty"`
+}
+
+// TURNServer is used for the front end access to a TURN server
+type TURNServer struct {
+	URLs       string `json:"urls,omitempty"`
+	Username   string `json:"username,omitempty"`
+	Credential string `json:"credential,omitempty"`
+}
+
+// TURNCredentials is the autorization creds for official TURN servers
+type TURNCredentials struct {
+	URLs       []string `json:"servers,omitempty"`
+	Username   string   `json:"username,omitempty"`
+	Credential string   `json:"credential,omitempty"`
 }

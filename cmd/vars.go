@@ -27,6 +27,7 @@ var (
 	GistAPI       = "https://api.github.com/gists"
 	PlaybackURL   = "https://termbackti.me"
 	Broker        = "wss://broker.termbackti.me"
+	APIEndpoint   = "https://api.termbackti.me"
 	Revision      = "0000000"
 	Version       = "0.0.0"
 	ConfigType    = "json"

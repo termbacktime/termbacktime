@@ -31,6 +31,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/caarlos0/spin"
 	au "github.com/logrusorgru/aurora"
@@ -115,7 +116,7 @@ func initConfig() {
 	}
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println(au.Sprintf(au.Bold("Loaded config: %s"), viper.ConfigFileUsed()))
+		fmt.Println(au.Sprintf(au.Bold("Loaded config: %s\n"), viper.ConfigFileUsed()))
 	}
 }
 
@@ -284,4 +285,14 @@ func DecodeAnswer(in string, obj interface{}) (interface{}, error) {
 	}
 
 	return obj, nil
+}
+
+// FMTTurn converts a string into a TURN URI
+func FMTTurn(addrs []string) []string {
+	servers := []string{}
+	for _, addr := range addrs {
+		servers = append(servers, fmt.Sprintf("turn:%s", strings.TrimPrefix(addr, "turn:")))
+	}
+
+	return servers
 }

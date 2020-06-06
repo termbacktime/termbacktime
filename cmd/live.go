@@ -21,15 +21,19 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
+	"regexp"
 	"syscall"
 	"time"
 
+	"github.com/caarlos0/spin"
 	"github.com/creack/pty"
 	"github.com/gorilla/websocket"
 	au "github.com/logrusorgru/aurora"
@@ -45,19 +49,99 @@ var (
 			{URLs: []string{STUNServerTwo}},
 		},
 	}
-	streaming   = false
-	dataChannel *webrtc.DataChannel
+	turnCredentials map[string]interface{}
+	tserver         = webrtc.ICEServer{}
+	turnMatch       = regexp.MustCompile(`^(?:([^:]+)?(?::([^@]+))?@)?((?:[^:]+)(?::\d+)?)$`)
+	streaming       = false
+	dataChannel     *webrtc.DataChannel
 )
 
 // liveCmd represents the auth command
 var liveCmd = &cobra.Command{
 	Use:   "live",
-	Short: "Live share your terminal with WebRTC to a browser (BETA)",
+	Short: "Live share your terminal via WebRTC to browser",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		defer spinner.Stop()
 		stopTicker := make(chan bool, 1)
 		closeWebsocket := make(chan bool, 1)
 		interrupt := make(chan os.Signal, 1)
 		signal.Notify(interrupt, os.Interrupt)
+
+		// Convert a TURN server address into an ICEServer struct ([<user>[:<password>]@]<server[:<port>]>)
+		turn := cmd.Flag("turn").Value.String()
+		if len(turn) > 0 && turnMatch.MatchString(turn) {
+			match := turnMatch.FindStringSubmatch(turn)
+			if len(match[1]) > 0 {
+				tserver.Username = match[1]
+			}
+			if len(match[2]) > 0 {
+				tserver.Credential = match[2]
+			}
+			if len(match[3]) > 0 {
+				tserver.URLs = FMTTurn([]string{match[3]})
+			}
+		}
+
+		// Add TURN server flags into an ICEServer struct
+		user := cmd.Flag("user").Value.String()
+		if len(user) > 0 {
+			tserver.Username = user
+		}
+		pass := cmd.Flag("pass").Value.String()
+		if len(pass) > 0 {
+			tserver.Credential = pass
+		}
+		addr := cmd.Flag("addr").Value.String()
+		if len(addr) > 0 {
+			tserver.URLs = FMTTurn([]string{addr})
+		}
+
+		// If a TURN server is provided add it to the ICEServers
+		if len(tserver.URLs) > 0 {
+			webrtcConfig.ICEServers = append(webrtcConfig.ICEServers, tserver)
+		} else {
+			if noturn, _ := cmd.Flags().GetBool("no-turn"); !noturn {
+				spinner = spin.New("%s Requesting TURN server access...")
+				spinner.Set(spin.Box1)
+				spinner.Start()
+
+				endpoint := fmt.Sprintf("%s/turn/credentials", APIEndpoint)
+				req, err := http.NewRequest("GET", endpoint, nil)
+				if err != nil {
+					return Error(fmt.Errorf("cannot create request: %v", err))
+				}
+				req.Header.Set("Content-Type", "application/json")
+				req.Header.Set("Accept", "application/json")
+				req.Header.Set("User-Agent", fmt.Sprintf("%s/%s", Application, Version))
+
+				client := http.Client{}
+				response, err := client.Do(req)
+				if err != nil {
+					return Error(fmt.Errorf("request HTTP error: %v", err))
+				}
+				defer response.Body.Close()
+				var tcreds TURNCredentials
+				if err = json.NewDecoder(response.Body).Decode(&tcreds); err != nil {
+					return Error(fmt.Errorf("response JSON error: %v", err))
+				}
+
+				spinner.Stop()
+				if len(tcreds.URLs) > 0 {
+					tserver.Username = tcreds.Username
+					tserver.Credential = tcreds.Credential
+					tserver.URLs = FMTTurn(tcreds.URLs)
+					webrtcConfig.ICEServers = append(webrtcConfig.ICEServers, tserver)
+					fmt.Println(au.Green(au.Sprintf(au.Bold("Access granted: %s\nUsername: %s\nPassword: %s\r\n"),
+						tserver.URLs, tserver.Username, tserver.Credential)))
+				} else {
+					return Error(fmt.Errorf("could not get TURN server credentials from %s - please try again later", endpoint))
+				}
+			}
+		}
+
+		spinner = spin.New("%s Creating WebRTC DataChannel...")
+		spinner.Set(spin.Box1)
+		spinner.Start()
 
 		chn := fmt.Sprintf("tbt:%s", uuid())
 		client, resp, err := websocket.DefaultDialer.Dial(fmt.Sprintf("%s/live?token=%s", Broker, chn), nil)
@@ -103,7 +187,8 @@ var liveCmd = &cobra.Command{
 			}
 		})
 
-		fmt.Println(au.Sprintf(au.Bold("\nLive playback: %s\r"), fmt.Sprintf("%s/live/#%s", PlaybackURL, chn)))
+		spinner.Stop()
+		fmt.Println(au.Sprintf(au.Bold("Live playback: %s\r"), fmt.Sprintf("%s/live/#%s", PlaybackURL, chn)))
 
 		go func() {
 			ticker := time.NewTicker(1 * time.Second)
@@ -135,7 +220,15 @@ var liveCmd = &cobra.Command{
 				}
 				if l.Connected {
 					stopTicker <- true
-					if err := client.WriteJSON(&LiveOffer{Offer: encoded}); err != nil {
+					packet := &LiveOffer{Offer: encoded}
+					if len(tserver.URLs) > 0 {
+						packet.TURN = &TURNServer{
+							URLs:       tserver.URLs[0],
+							Username:   tserver.Username,
+							Credential: tserver.Credential.(string),
+						}
+					}
+					if err := client.WriteJSON(packet); err != nil {
 						fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
 						os.Exit(1)
 					}
@@ -165,10 +258,6 @@ var liveCmd = &cobra.Command{
 			}
 		}
 	},
-}
-
-func init() {
-	recordCmd.AddCommand(liveCmd)
 }
 
 func startpty() {
@@ -269,4 +358,13 @@ func startpty() {
 	_ = terminal.Restore(int(os.Stdin.Fd()), oldState)
 	fmt.Println(au.Bold(au.Green("\r\nLive streaming ended!")))
 	os.Exit(0)
+}
+
+func init() {
+	liveCmd.Flags().StringP("turn", "t", "", "TURN server string ([<user>[:<password>]@]<server[:<port>]>)")
+	liveCmd.Flags().StringP("user", "u", "", "TURN server username")
+	liveCmd.Flags().StringP("pass", "p", "", "TURN server password")
+	liveCmd.Flags().StringP("addr", "a", "", "TURN server address with optional port (<server>[:<port>])")
+	liveCmd.Flags().BoolP("no-turn", "n", false, fmt.Sprintf("do NOT use the offical %s TURN servers", Application))
+	recordCmd.AddCommand(liveCmd)
 }
