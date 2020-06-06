@@ -52,7 +52,7 @@ For now [TermBackTime] uses Google's STUN servers unless changed at compile time
 A STUN server is used to detect network addresses. Please see https://en.wikipedia.org/wiki/STUN for more information.
 
 ##### TURN options
-* Use an offical TURN server provided by [TermBackTime]:
+* Use an official TURN server provided by [TermBackTime]:
   * `termbacktime live`
 * Provide your own TURN server credentials:
   * `termbacktime live --turn <username>:<password>@<server>[:<port>]`
