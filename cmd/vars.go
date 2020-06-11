@@ -33,4 +33,7 @@ var (
 	ConfigType    = "json"
 	STUNServerOne = "stun:stun1.l.google.com:19302"
 	STUNServerTwo = "stun:stun2.l.google.com:19302"
+	Analytics     = ""
+	HomeDir       = getHome()
+	Username      = uuid()
 )

@@ -21,9 +21,11 @@
 package main
 
 import (
+	"github.com/spf13/cobra"
 	record "github.com/termbacktime/termbacktime/cmd"
 )
 
 func main() {
+	cobra.OnInitialize(record.InitConfig)
 	record.Execute()
 }

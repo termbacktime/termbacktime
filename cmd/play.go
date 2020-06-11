@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"github.com/caarlos0/spin"
+	au "github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 )
 
@@ -87,7 +88,7 @@ var playCmd = &cobra.Command{
 			return Error(fmt.Errorf("could not load recording data from Gist: %v", err))
 		}
 
-		fmt.Print("Starting playback!\r\n\r\n")
+		fmt.Print(au.Green(au.Bold("Starting playback!\r\n\r\n")))
 		for _, line := range lines {
 			if line.Command == "s" {
 				os.Stdout.WriteString(fmt.Sprintf("\033[8;%d;%dt", line.Sizes[1], line.Sizes[0]))
@@ -100,7 +101,12 @@ var playCmd = &cobra.Command{
 				}
 			}
 		}
-		fmt.Println("\r\nPlayback finished.")
+		fmt.Println(au.Green(au.Bold("\r\nPlayback finished.")))
+
+		// Track played recordings
+		Track("recordings", map[string]interface{}{
+			"name": "played",
+		})
 
 		return nil
 	},

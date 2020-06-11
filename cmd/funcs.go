@@ -105,18 +105,35 @@ func getHome() string {
 	return home
 }
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
+// InitConfig reads in config file and ENV variables if set.
+func InitConfig() {
+	created := false
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
+		if !fileExists(cfgFile) {
+			viper.Set("version", Version)
+			viper.Set("login", uuid()) // Give a unique default login ID
+			viper.Set("analytics", len(Analytics) > 0)
+			if err := viper.WriteConfig(); err == nil {
+				created = true
+				fmt.Println(au.Sprintf(au.Bold("Created config: %s\n"), viper.ConfigFileUsed()))
+			} else {
+				fmt.Println(au.Sprintf(au.Bold(au.Red("Error: %v")), err))
+				os.Exit(1)
+			}
+		}
+		viper.AutomaticEnv()
+		if err := viper.ReadInConfig(); err == nil {
+			if !created {
+				fmt.Println(au.Sprintf(au.Bold("Loaded config: %s\n"), viper.ConfigFileUsed()))
+			}
+		} else {
+			fmt.Println(au.Sprintf(au.Bold(au.Red("Error: %v")), err))
+			os.Exit(1)
+		}
+		Username = viper.GetString("login")
 	} else {
-		viper.SetConfigName(".termbacktime")
-		viper.AddConfigPath(HomeDir)
-		viper.AddConfigPath(".")
-	}
-	viper.AutomaticEnv()
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println(au.Sprintf(au.Bold("Loaded config: %s\n"), viper.ConfigFileUsed()))
+		fmt.Println(au.Bold(au.Red("Error: no configuration provided")))
 	}
 }
 
@@ -136,16 +153,44 @@ func colorify(str string, t int) string {
 }
 
 // saveToken saves a GitHub token to the config file.
-func saveToken(tkn string, usr string, man bool) {
+func saveToken(data map[string]interface{}, man bool) {
 	if man {
-		fmt.Printf("Saving token: %s\r\n", tkn)
+		fmt.Printf("Saving token: %s\r\n", data["token"].(string))
 	}
-	viper.Set("token", tkn)
-	if len(usr) > 0 {
-		viper.Set("login", usr)
+	viper.Set("token", data["token"].(string))
+	if !man {
+		if data["login"] != nil {
+			viper.Set("login", data["login"].(string))
+		}
+		properties := map[string]interface{}{}
+		for key, value := range data {
+			if _, ok := data[key]; ok {
+				if key != "token" {
+					key := fmt.Sprintf("gh_%s", key)
+					viper.Set(key, value)
+					properties[key] = value
+				}
+			}
+		}
+		if data["name"] != nil {
+			fields := strings.Fields(data["name"].(string))
+			if len(fields[0]) > 0 {
+				properties["$first_name"] = fields[0]
+			}
+			if len(fields[1]) > 0 {
+				properties["$last_name"] = fields[1]
+			}
+		}
+		if data["avatar_url"] != nil {
+			properties["$avatar"] = data["avatar_url"].(string)
+		}
+		if data["email"] != nil {
+			properties["$email"] = data["email"].(string)
+		}
+		MixUser(properties)
 	}
 	if err := viper.WriteConfig(); err == nil {
-		fmt.Println(au.Sprintf(au.Bold("Saved config: %s"), viper.ConfigFileUsed()))
+		fmt.Println(au.Sprintf(au.Bold("\nSaved config: %s"), viper.ConfigFileUsed()))
 		os.Exit(0)
 	} else {
 		fmt.Println(au.Sprintf(au.Bold(au.Red("Error: %v")), err))
@@ -253,6 +298,11 @@ func upload(rec Recording, cmd *cobra.Command) error {
 		}
 	}
 
+	// Track successful recordings
+	Track("recordings", map[string]interface{}{
+		"name": "published",
+	})
+
 	return nil
 }
 
@@ -295,4 +345,13 @@ func FMTTurn(addrs []string) []string {
 	}
 
 	return servers
+}
+
+// fileExists checks if the file exists and is not a dir
+func fileExists(file string) bool {
+	info, err := os.Stat(file)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }

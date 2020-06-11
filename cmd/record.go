@@ -47,8 +47,6 @@ var (
 	Closed       bool
 	GistResponse map[string]interface{}
 	GithubToken  string
-	GithubLogin  string
-	HomeDir      = getHome()
 	Instructions []Lines
 	spinner      = spin.New("%s Working...")
 )
@@ -64,9 +62,8 @@ var recordCmd = &cobra.Command{
 				return Error(fmt.Errorf("missing GitHub authentication token"))
 			}
 		}
-		GithubLogin = viper.GetString("login")
-		if len(GithubLogin) > 0 {
-			fmt.Println(au.Sprintf(au.Bold("Initiating terminal recording for %s..."), GithubLogin))
+		if len(Username) > 0 {
+			fmt.Println(au.Sprintf(au.Bold("Initiating terminal recording for %s..."), Username))
 		} else {
 			fmt.Println(au.Bold("Initiating terminal recording..."))
 		}
@@ -149,6 +146,11 @@ var recordCmd = &cobra.Command{
 
 		fmt.Println(au.Green(au.Bold("Recording started!\r\n")))
 
+		// Track started recordings
+		Track("recordings", map[string]interface{}{
+			"name": "started",
+		})
+
 		// Read from the PTY into a buffer.
 		rectime := time.Now()
 		bufout := make([]byte, 4096)
@@ -202,12 +204,16 @@ var recordCmd = &cobra.Command{
 						return upload(rec, cmd)
 					} else if no.MatchString(text) {
 						fmt.Println(au.Sprintf(au.Bold("Canceled!")))
+						// Track canceled recordings
+						Track("recordings", map[string]interface{}{
+							"name": "canceled",
+						})
 						break stdinloop
 					} else {
 						fmt.Printf(au.Sprintf(au.Bold("\r\nSave to Gist? [y/n]: ")))
 					}
 				}
-			case <-time.After(30 * time.Second):
+			case <-time.After(60 * time.Second):
 				fmt.Println(au.Bold("\r\nUpload timeout; exiting..."))
 				break stdinloop
 			}
@@ -224,11 +230,9 @@ func Execute() {
 }
 
 func init() {
-	viper.SetConfigType(ConfigType)
-	cobra.OnInitialize(initConfig)
 	recordCmd.Version = Version
 	recordCmd.SetVersionTemplate(fmt.Sprintf("%s - %s/ - version=%s revision=%s (%s)\r\n", Application, PlaybackURL, Version, Revision, runtime.Version()))
 	recordCmd.Flags().BoolP("open", "", false, "open recording playback in default browser after save")
 	recordCmd.Flags().StringVar(&GithubToken, "token", "", "use the specified GitHub authentication token")
-	recordCmd.PersistentFlags().StringVar(&cfgFile, "config", fmt.Sprintf("%s%s.termbacktime.%s", HomeDir, string(os.PathSeparator), ConfigType), "config file")
+	recordCmd.PersistentFlags().StringVar(&cfgFile, "config", fmt.Sprintf("%s%s.%s.%s", HomeDir, string(os.PathSeparator), Application, ConfigType), "config file")
 }

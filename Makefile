@@ -9,6 +9,7 @@ DEVBROKER=wss://dev-broker.termbackti.me
 DEVAPI=https://dev-api.termbackti.me
 
 # Misc settings
+ANALYTICS=07d66b96ce0af1bc1bb721c58417df66
 GISTAPI=https://api.github.com/gists
 GITURL=github.com/termbacktime/termbacktime
 APP_NAME=termbacktime
@@ -32,8 +33,8 @@ VERSION=$(shell cat ./VERSION)
 LDFLAGS=-X '${GITURL}/cmd.Application=${APP_NAME}' -X '${GITURL}/cmd.Version=${VERSION}' -X '${GITURL}/cmd.Revision=${REV}' \
 	-X '${GITURL}/cmd.PlaybackURL=${PBURL}'  -X '${GITURL}/cmd.GistAPI=${GISTAPI}' -X '${GITURL}/cmd.Broker=${BROKER}' \
 	-X '${GITURL}/cmd.GistFileName=${GFILE_NAME}' -X '${GITURL}/cmd.ConfigType=${shell echo ${CONFIG_TYPE} | tr '[:upper:]' '[:lower:]'}' \
-	-X '${GITURL}/cmd.STUNServerOne=${STUN_SERVER1}' -X '${GITURL}/cmd.STUNServerTwo=${STUN_SERVER2}' \
-	-X '${GITURL}/cmd.APIEndpoint=${API}'
+	-X '${GITURL}/cmd.STUNServerOne=${STUN_SERVER1}' -X '${GITURL}/cmd.STUNServerTwo=${STUN_SERVER2}' -X '${GITURL}/cmd.APIEndpoint=${API}' \
+	-X '${GITURL}/cmd.Analytics=${ANALYTICS}'
 
 # Development compiler flag options
 DEVLDFLAGS=-X '${GITURL}/cmd.Application=${APP_NAME}-dev' -X '${GITURL}/cmd.Revision=DEV-${REV}' -X '${GITURL}/cmd.PlaybackURL=${DEVPBURL}' \

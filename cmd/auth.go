@@ -39,7 +39,7 @@ var authCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		tkn := cmd.Flag("set-token").Value.String()
 		if len(tkn) > 0 {
-			saveToken(tkn, "", true)
+			saveToken(map[string]interface{}{"token": tkn}, true)
 		} else {
 			interrupt := make(chan os.Signal, 1)
 			signal.Notify(interrupt, os.Interrupt)
@@ -73,14 +73,14 @@ var authCmd = &cobra.Command{
 			go func() {
 				for {
 					defer close(done)
-					var r AuthResponse
+					var r map[string]interface{}
 					if err := client.ReadJSON(&r); err != nil {
 						fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
 						return
 					}
-					if len(r.Token) > 0 {
-						fmt.Printf("\rLogged in as %s - Token: %s\r\n", r.Login, r.Token)
-						saveToken(fmt.Sprintf("%s", r.Token), fmt.Sprintf("%s", r.Login), false)
+					if r["token"] != nil && len(r["token"].(string)) > 0 {
+						fmt.Printf("\rLogged in as %s (%s)\r\n", r["login"], r["token"])
+						saveToken(r, false)
 					}
 				}
 			}()
