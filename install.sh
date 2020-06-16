@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Locally install go and termbacktime.
+#  Locally install Golang and (update) termbacktime.
 #
 #  ./install.sh <optional go version>
 #
@@ -12,7 +12,8 @@ set -e
 function installtbt () {
 	echo "Fetching termbacktime..."
 	echo ""
-	go get -u -v github.com/termbacktime/termbacktime
+	cd ; go get -u -v github.com/termbacktime/termbacktime &
+    wait < <(jobs -p)
 	cd "$GOPATH/src/github.com/termbacktime/termbacktime"
 	echo ""
 	echo "Running make install..."
@@ -34,7 +35,12 @@ get_latest () {
 
 if [ -x "$(command -v go)" ]; then
 	echo "Go found: $(go version)"
-	echo "Installing termbacktime to $GOPATH in 5 seconds..."
+    if [ -x "$(command -v termbacktime)" ]; then
+        echo "termbacktime found: $(termbacktime --version)"
+        echo "Updating $GOPATH/src/github.com/termbacktime/termbacktime in 5 seconds..."
+    else
+	    echo "Installing termbacktime to $GOPATH in 5 seconds..."
+    fi;
 	sleep 5
 	echo ""
 	installtbt

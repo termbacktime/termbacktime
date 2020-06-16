@@ -6,7 +6,7 @@ Terminal recording and playback, written in [Go]. All terminal recordings are cu
 
 https://termbackti.me/p/1fc1b6cd6317180d01f60b3011490e75
 
-## Install
+## Install / Update
 > Note: If [Go] is already installed, will use the currently installed version to install `termbacktime`.
 There is now an install script for Linux, Darwin, and Windows 10 using [WSL]. This will attempt to install the latest version of Go, defaulting back to 1.13. For other distributions please see the [releases] page. [Go] will be installed in `$HOME/.goroot` as `$GOROOT` and `$GOPATH` is set to `$HOME/go`.
 

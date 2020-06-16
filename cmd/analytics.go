@@ -11,6 +11,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	mixpanel = "https://api.mixpanel.com/%s/?ip=1"
+)
+
 // Track submits events to mixpanel, disregard errors
 func Track(event string, data map[string]interface{}) {
 	if distinctID, err := machineid.ProtectedID(Application); err == nil {
@@ -31,10 +35,9 @@ func Track(event string, data map[string]interface{}) {
 			}
 			params["properties"] = properties
 			if data, err := json.Marshal(params); err == nil {
-				if req, err := http.NewRequest("GET", "https://api.mixpanel.com/track/", nil); err == nil {
+				if req, err := http.NewRequest("GET", fmt.Sprintf(mixpanel, "track"), nil); err == nil {
 					q := req.URL.Query()
 					q.Add("data", base64.StdEncoding.EncodeToString(data))
-					q.Add("ip", "1")
 					req.URL.RawQuery = q.Encode()
 					(&http.Client{}).Do(req)
 				}
@@ -60,10 +63,9 @@ func MixUser(data map[string]interface{}) {
 			}
 			params["$set"] = properties
 			if data, err := json.Marshal(params); err == nil {
-				if req, err := http.NewRequest("GET", "https://api.mixpanel.com/engage/", nil); err == nil {
+				if req, err := http.NewRequest("GET", fmt.Sprintf(mixpanel, "engage"), nil); err == nil {
 					q := req.URL.Query()
 					q.Add("data", base64.StdEncoding.EncodeToString(data))
-					q.Add("ip", "1")
 					req.URL.RawQuery = q.Encode()
 					(&http.Client{}).Do(req)
 				}
