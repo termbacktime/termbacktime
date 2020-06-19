@@ -173,12 +173,13 @@ func saveToken(data map[string]interface{}, man bool) {
 			}
 		}
 		if data["name"] != nil {
-			fields := strings.Fields(data["name"].(string))
-			if len(fields[0]) > 0 {
+			name := data["name"].(string)
+			if strings.Contains(name, " ") {
+				fields := strings.Fields(data["name"].(string))
 				properties["$first_name"] = fields[0]
-			}
-			if len(fields[1]) > 0 {
 				properties["$last_name"] = fields[1]
+			} else {
+				properties["$first_name"] = name
 			}
 		}
 		if data["avatar_url"] != nil {
