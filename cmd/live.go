@@ -63,7 +63,6 @@ var liveCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		defer spinner.Stop()
 		stopTicker := make(chan bool, 1)
-		closeWebsocket := make(chan bool, 1)
 		interrupt := make(chan os.Signal, 1)
 		signal.Notify(interrupt, os.Interrupt)
 
@@ -218,7 +217,7 @@ var liveCmd = &cobra.Command{
 			}
 		}()
 
-		done := make(chan struct{})
+		done := make(chan bool, 1)
 		go func() {
 			for {
 				defer close(done)
@@ -244,23 +243,21 @@ var liveCmd = &cobra.Command{
 				} else if len(l.Answer) > 0 {
 					answer := webrtc.SessionDescription{}
 					DecodeAnswer(l.Answer, &answer)
-					err = peerConnection.SetRemoteDescription(answer)
-					close(closeWebsocket)
-					select {}
+					if err := peerConnection.SetRemoteDescription(answer); err != nil {
+						fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
+						os.Exit(1)
+					}
+					done <- true
 				}
 			}
 		}()
 
 		for {
 			select {
-			case <-closeWebsocket:
-				client.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			case <-done:
-				return nil
 			case <-interrupt:
 				client.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 				select {
-				case <-done:
 				case <-time.After(time.Second):
 				}
 				return nil
@@ -319,8 +316,7 @@ func startpty() {
 	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }()
 
 	// Write STDIN to PTY.
-	chn := make(chan string)
-	go func(ch chan string) {
+	go func() {
 		bufin := make([]byte, 2048)
 		for {
 			nr, err := os.Stdin.Read(bufin)
@@ -336,11 +332,9 @@ func startpty() {
 				if _, err = ptmx.Write(bufin[0:nr]); err != nil {
 					break
 				}
-			} else {
-				chn <- string(bufin[0:nr])
 			}
 		}
-	}(chn)
+	}()
 
 	// XXX: Send this over the data channel?
 	fmt.Println(au.Green(au.Bold("Live streaming started!\r\n")))
@@ -353,20 +347,21 @@ func startpty() {
 	// Read from the PTY into a buffer.
 	bufout := make([]byte, 4096)
 	for {
-		nr, err := ptmx.Read(bufout)
-		if err != nil {
-			break
+		if nr, err := ptmx.Read(bufout); err == nil {
+			// Get the current line
+			line := string(bufout[0:nr])
+
+			// Send the line over the data channel
+			dataChannel.SendText(ToJSON(LiveLine{
+				Lines: []string{line},
+			}))
+
+			// Write to STDOUT
+			os.Stdout.WriteString(line)
+
+			continue
 		}
-		// Get the current line
-		line := string(bufout[0:nr])
-
-		// Send the line over the data channel
-		dataChannel.SendText(ToJSON(LiveLine{
-			Lines: []string{line},
-		}))
-
-		// Write to STDOUT
-		os.Stdout.WriteString(line)
+		break
 	}
 
 	_ = terminal.Restore(int(os.Stdin.Fd()), oldState)

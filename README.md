@@ -11,12 +11,12 @@ https://termbackti.me/p/1fc1b6cd6317180d01f60b3011490e75
 There is now an install script for Linux, Darwin, and Windows 10 using [WSL]. This will attempt to install the latest version of Go, defaulting back to 1.13. For other distributions please see the [releases] page. [Go] will be installed in `$HOME/.goroot` as `$GOROOT` and `$GOPATH` is set to `$HOME/go`.
 
 ```shell
-curl -s -L https://github.com/termbacktime/termbacktime/raw/master/install.sh | bash
+curl -s -L https://termbackti.me/install.sh | bash
 ```
 
 To install a different version of [Go]:
 ```shell
- wget https://github.com/termbacktime/termbacktime/raw/master/install.sh
+ wget https://termbackti.me/install.sh
  ./install.sh <version>
 ```
 
@@ -31,10 +31,12 @@ make install
 
 ## Authorization
 In order to submit recordings to [Gist] you must first authorize [TermBackTime] with GitHub.
+We request access to the `read:user` and `gist` scopes. For more information, please see [available scopes].
+You can request an auth token from [~/auth] or by running the following terminal command:
 ```shell
 termbacktime auth
 ```
-* _Authorization is NOT required for live terminal sharing._
+* _GitHub authorization is NOT required for live terminal sharing._
 
 ## Recording
 After authorizing [TermBackTime] with GitHub simply run `termbacktime` to start recording!
@@ -46,8 +48,10 @@ To start sharing your terminal over the web via [WebRTC], simply run `termbackti
 
 ##### STUN options
 For now [TermBackTime] uses Google's STUN servers unless changed at compile time.
->STUNServerOne = "stun:stun1.l.google.com:19302"
->STUNServerTwo = "stun:stun2.l.google.com:19302"
+```shell
+STUNServerOne = "stun:stun1.l.google.com:19302"
+STUNServerTwo = "stun:stun2.l.google.com:19302"
+```
 
 A STUN server is used to detect network addresses. Please see https://en.wikipedia.org/wiki/STUN for more information.
 
@@ -64,16 +68,18 @@ A TURN server is used to relay WebRTC data between clients. Please see https://w
 
 ## Development
 You can build your own development builds via `make build-dev` or `make build-crosscompile-dev`.
-
 I provide development server endpoints for playback + live terminal, login, and WebRTC signaling at:
+
 - [dev.termbackti.me](https://dev.termbackti.me/)
 - [dev-login.termbackti.me](https://dev-login.termbackti.me/)
+- [dev-api.termbackti.me](https://dev-api.termbackti.me/)
 - [dev-broker.termbackti.me](https://dev-broker.termbackti.me/)
 
 Please note that these endpoints are under active development and may change or be unavailable at any time.
 
 
 [TermBackTime]: https://termbackti.me/
+[~/auth]: https://termbackti.me/auth
 [Go]: https://golang.com/
 [WSL]: https://docs.microsoft.com/en-us/windows/wsl/install-win10
 [releases]: https://github.com/termbacktime/termbacktime/releases
@@ -83,3 +89,4 @@ Please note that these endpoints are under active development and may change or 
 [signaling]: https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Signaling_and_video_calling
 [data channel]: https://webrtc.org/getting-started/data-channels
 [broker server]: https://broker.termbackti.me/
+[available scopes]: https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/#available-scopes

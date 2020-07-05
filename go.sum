@@ -263,8 +263,6 @@ github.com/pion/transport v0.10.0 h1:9M12BSneJm6ggGhJyWpDveFOstJsTiQjkLf4M44rm80
 github.com/pion/transport v0.10.0/go.mod h1:BnHnUipd0rZQyTVB2SBGojFHT9CBt5C5TcsJSQGkvSE=
 github.com/pion/turn/v2 v2.0.3 h1:SJUUIbcPoehlyZgMyIUbBBDhI03sBx32x3JuSIBKBWA=
 github.com/pion/turn/v2 v2.0.3/go.mod h1:kl1hmT3NxcLynpXVnwJgObL8C9NaCyPTeqI2DcCpSZs=
-github.com/pion/webrtc/v2 v2.2.15 h1:zZp9n/4DQtL4y+X8jytdpQDNG8TtVjrww0dWBCvmJxY=
-github.com/pion/webrtc/v2 v2.2.15/go.mod h1:w9V24w5e3tRmd75vtdqpy7pSJZF6//aymHWakixK6NA=
 github.com/pion/webrtc/v2 v2.2.16 h1:d0Eirg3LjX6J1+b1sbbxz7+L1/KOgFZRQ6Zbe+PPiJI=
 github.com/pion/webrtc/v2 v2.2.16/go.mod h1:/ZI6Xm5uU5ENLa5NRGESDAUIwPbOkzMgdUeD7uNFCyM=
 github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4 h1:49lOXmGaUpV9Fz3gd7TFZY106KVlPVa5jcYD1gaQf98=
@@ -332,8 +330,6 @@ github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/spf13/afero v1.1.2 h1:m8/z1t7/fwjysjQRYbP0RD+bUIF/8tJwPdEZsI83ACI=
 github.com/spf13/afero v1.1.2/go.mod h1:j4pytiNVoe2o6bmDsKpLACNPDBIoEAkihy7loJ1B0CQ=
-github.com/spf13/afero v1.2.2 h1:5jhuqJyZCZf2JRofRvN/nIFgIWNzPa3/Vz8mYylgbWc=
-github.com/spf13/afero v1.2.2/go.mod h1:9ZxEEn6pIJ8Rxe320qSDBk6AsU0r9pR7Q4OcevTdifk=
 github.com/spf13/afero v1.3.0 h1:Ysnmjh1Di8EaWaBv40CYR4IdaIsBc5996Gh1oZzCBKk=
 github.com/spf13/afero v1.3.0/go.mod h1:5KUK8ByomD5Ti5Artl0RtHeI5pTF7MIDuXL3yY520V4=
 github.com/spf13/cast v1.3.0 h1:oget//CVOEoFewqQxwr0Ej5yjygnqGkvggSE/gB35Q8=
