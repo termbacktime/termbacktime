@@ -22,10 +22,16 @@ package main
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	record "github.com/termbacktime/termbacktime/cmd"
 )
 
 func main() {
 	cobra.OnInitialize(record.InitConfig)
+	cobra.OnInitialize(func() {
+		if !viper.IsSet("version-check") || viper.GetBool("version-check") {
+			record.VersionCheck(record.Version)
+		}
+	})
 	record.Execute()
 }

@@ -28,10 +28,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/caarlos0/spin"
 	au "github.com/logrusorgru/aurora"
@@ -40,6 +42,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/mod/semver"
 )
 
 // shell attempts to return the users terminal shell.
@@ -105,13 +108,32 @@ func getHome() string {
 	return home
 }
 
+// VersionCheck checks the current version against the semver at termbackti.me/_version
+// TODO: Create a manual command to check versions.
+func VersionCheck(current string) {
+	client := &http.Client{
+		Transport: &http.Transport{
+			IdleConnTimeout:       5 * time.Second,
+			ResponseHeaderTimeout: 5 * time.Second,
+		},
+	}
+	if res, err := client.Get(fmt.Sprintf("%s/_version", PlaybackURL)); err == nil {
+		defer res.Body.Close()
+		if version, err := ioutil.ReadAll(res.Body); err == nil {
+			if semver.Compare(current, string(version)) == -1 {
+				fmt.Println(au.Sprintf(au.Bold(au.Green("A new version of %s is available: %s\r\n")), Application, version))
+			}
+		}
+	}
+}
+
 // InitConfig reads in config file and ENV variables if set.
 func InitConfig() {
 	created := false
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 		if !fileExists(cfgFile) {
-			viper.Set("version", Version)
+			viper.Set("version-check", true)
 			viper.Set("login", uuid()) // Give a unique default login ID
 			viper.Set("analytics", len(Analytics) > 0)
 			if err := viper.WriteConfig(); err == nil {
