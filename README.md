@@ -4,7 +4,7 @@ Terminal recording and playback, written in [Go]. All terminal recordings are cu
 ### Playback Example
 ![TermBackTime - Playback](https://i.imgur.com/RtLL8e2.gif)
 
-https://termbackti.me/p/1fc1b6cd6317180d01f60b3011490e75
+[https://termbackti.me/p/1fc1b6cd6317180d01f60b3011490e75](https://termbackti.me/p/1fc1b6cd6317180d01f60b3011490e75)
 
 ## Install / Update
 > Note: If [Go] is already installed, will use the currently installed version to install `termbacktime`.
