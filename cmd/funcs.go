@@ -154,7 +154,7 @@ func InitConfig(fn func() (string, bool)) (string, bool) {
 				fmt.Println(au.Sprintf(au.Bold("Loaded config: %s\n"), viper.ConfigFileUsed()))
 			}
 		} else {
-			fmt.Println(fmt.Errorf(au.Sprintf(au.Bold(au.Red("Error: %v")), err)))
+			fmt.Println(au.Sprintf(au.Bold(au.Red("Error: %v")), err))
 			os.Exit(1)
 		}
 		Username = viper.GetString("login")
