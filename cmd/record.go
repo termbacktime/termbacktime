@@ -33,7 +33,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/caarlos0/spin"
 	"github.com/creack/pty"
 	au "github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
@@ -41,20 +40,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-// Setting storage.
-var (
-	cfgFile      string
-	Closed       bool
-	GistResponse map[string]interface{}
-	GithubToken  string
-	Instructions []Lines
-	spinner      = spin.New("%s Working...")
-)
-
-// recordCmd handles terminal recording.
 var recordCmd = &cobra.Command{
-	Use:   Application,
-	Short: fmt.Sprintf("%s - %s/ - version=%s revision=%s (%s)\r\n", Application, PlaybackURL, Version, Revision, runtime.Version()),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(GithubToken) <= 0 {
 			GithubToken = viper.GetString("token")
@@ -220,19 +206,4 @@ var recordCmd = &cobra.Command{
 		}
 		return nil
 	},
-}
-
-// Execute runs the recording function.
-func Execute() {
-	if err := recordCmd.Execute(); err != nil {
-		os.Exit(1)
-	}
-}
-
-func init() {
-	recordCmd.Version = Version
-	recordCmd.SetVersionTemplate(fmt.Sprintf("%s - %s/ - version=%s revision=%s (%s)\r\n", Application, PlaybackURL, Version, Revision, runtime.Version()))
-	recordCmd.Flags().BoolP("open", "", false, "open recording playback in default browser after save")
-	recordCmd.Flags().StringVar(&GithubToken, "token", "", "use the specified GitHub authentication token")
-	recordCmd.PersistentFlags().StringVar(&cfgFile, "config", fmt.Sprintf("%s%s.%s.%s", HomeDir, string(os.PathSeparator), Application, ConfigType), "config file")
 }

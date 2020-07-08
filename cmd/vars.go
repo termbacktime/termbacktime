@@ -20,7 +20,16 @@
 
 package cmd
 
-// Export default compile settings.
+import (
+	"fmt"
+	"regexp"
+	"runtime"
+
+	"github.com/caarlos0/spin"
+	"github.com/pion/webrtc/v2"
+)
+
+// Exported default compile settings.
 var (
 	GistFileName  = "terminal-recording.json"
 	Application   = "termbacktime"
@@ -36,4 +45,31 @@ var (
 	Analytics     = ""
 	HomeDir       = getHome()
 	Username      = uuid()
+)
+
+// Base unexported application variables.
+var (
+	versionTemplate = fmt.Sprintf("%s - %s/ - version=%s revision=%s (%s)\r\n",
+		Application, PlaybackURL, Version, Revision, runtime.Version())
+	cfgFile      string
+	Closed       bool
+	GistResponse map[string]interface{}
+	GithubToken  string
+	Instructions []Lines
+	spinner      = spin.New("%s Working...")
+	skipConfig   = map[string]bool{
+		"completion": true,
+	}
+	webrtcConfig = webrtc.Configuration{
+		ICEServers: []webrtc.ICEServer{
+			{URLs: []string{STUNServerOne}},
+			{URLs: []string{STUNServerTwo}},
+		},
+	}
+	turnCredentials map[string]interface{}
+	tserver         = webrtc.ICEServer{}
+	turnMatch       = regexp.MustCompile(`^(?:([^:]+)?(?::([^@]+))?@)?((?:[^:]+)(?::\d+)?)$`)
+	streaming       = false
+	dataChannel     *webrtc.DataChannel
+	mixpanel        = "https://api.mixpanel.com/%s/?ip=1"
 )

@@ -18,12 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package main
+package cmd
 
 import (
-	root "github.com/termbacktime/termbacktime/cmd"
+	"bytes"
+	"os"
+	"text/template"
+
+	"github.com/spf13/cobra"
+	"github.com/termbacktime/termbacktime/templates"
 )
 
-func main() {
-	root.Execute()
+var completionCmd = &cobra.Command{
+	Use:   "completion [bash|zsh|fish|powershell]",
+	Short: "Generate shell based autocomplete",
+	Long: func() string {
+		{
+			if tmpl, err := template.New("completion").Parse(templates.Completion); err == nil {
+				var output bytes.Buffer
+				if err := tmpl.Execute(&output, templates.CompletionR{
+					Application: Application,
+				}); err == nil {
+					return output.String()
+				}
+			}
+			return "Template failure!"
+		}
+	}(),
+	DisableFlagsInUseLine: true,
+	ValidArgs:             []string{"bash", "zsh", "fish"},
+	Args:                  cobra.ExactValidArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		switch args[0] {
+		case "bash":
+			cmd.Root().GenBashCompletion(os.Stdout)
+		case "zsh":
+			cmd.Root().GenZshCompletion(os.Stdout)
+		case "fish":
+			cmd.Root().GenFishCompletion(os.Stdout, true)
+		}
+	},
+}
+
+func init() {
+	root.AddCommand(completionCmd)
 }

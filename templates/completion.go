@@ -18,12 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package main
+package templates
 
-import (
-	root "github.com/termbacktime/termbacktime/cmd"
-)
-
-func main() {
-	root.Execute()
+// CompletionR is the replacements for the completion template
+type CompletionR struct {
+	Application string
 }
+
+// Completion is the Long version for cobra.
+var Completion = `To load shell based autocomplete:
+
+Bash:
+    $ source <({{.Application}} completion bash)
+
+# To load completions for each session, execute once:
+Linux:
+    $ {{.Application}} completion bash > /etc/bash_completion.d/{{.Application}}
+MacOS:
+    $ {{.Application}} completion bash > /usr/local/etc/bash_completion.d/{{.Application}}
+
+Zsh:
+    $ source <({{.Application}} completion zsh)
+
+# To load completions for each session, execute once:
+    $ {{.Application}} completion zsh > "${fpath[1]}/_{{.Application}}"
+
+Fish:
+    $ {{.Application}} completion fish | source
+
+# To load completions for each session, execute once:
+    $ {{.Application}} completion fish > ~/.config/fish/completions/{{.Application}}.fish`

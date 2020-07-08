@@ -110,7 +110,7 @@ func getHome() string {
 
 // VersionCheck checks the current version against the semver at termbackti.me/_version
 // TODO: Create a manual command to check versions.
-func VersionCheck(current string) {
+func VersionCheck(current string) (string, bool) {
 	client := &http.Client{
 		Transport: &http.Transport{
 			IdleConnTimeout:       5 * time.Second,
@@ -120,15 +120,19 @@ func VersionCheck(current string) {
 	if res, err := client.Get(fmt.Sprintf("%s/_version", PlaybackURL)); err == nil {
 		defer res.Body.Close()
 		if version, err := ioutil.ReadAll(res.Body); err == nil {
-			if semver.Compare(current, string(version)) == -1 {
-				fmt.Println(au.Sprintf(au.Bold(au.Green("A new version of %s is available: %s\r\n")), Application, version))
+			ver := string(version)
+			if semver.Compare(current, ver) == -1 {
+				return ver, true
 			}
+			return ver, false
 		}
 	}
+
+	return "", false
 }
 
 // InitConfig reads in config file and ENV variables if set.
-func InitConfig() {
+func InitConfig(fn func() (string, bool)) (string, bool) {
 	created := false
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
@@ -150,13 +154,15 @@ func InitConfig() {
 				fmt.Println(au.Sprintf(au.Bold("Loaded config: %s\n"), viper.ConfigFileUsed()))
 			}
 		} else {
-			fmt.Println(au.Sprintf(au.Bold(au.Red("Error: %v")), err))
+			fmt.Println(fmt.Errorf(au.Sprintf(au.Bold(au.Red("Error: %v")), err)))
 			os.Exit(1)
 		}
 		Username = viper.GetString("login")
 	} else {
 		fmt.Println(au.Bold(au.Red("Error: no configuration provided")))
 	}
+
+	return fn()
 }
 
 // uuid returns a UUIDv4 token.

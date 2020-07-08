@@ -29,7 +29,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"regexp"
 	"syscall"
 	"time"
 
@@ -42,21 +41,6 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-var (
-	webrtcConfig = webrtc.Configuration{
-		ICEServers: []webrtc.ICEServer{
-			{URLs: []string{STUNServerOne}},
-			{URLs: []string{STUNServerTwo}},
-		},
-	}
-	turnCredentials map[string]interface{}
-	tserver         = webrtc.ICEServer{}
-	turnMatch       = regexp.MustCompile(`^(?:([^:]+)?(?::([^@]+))?@)?((?:[^:]+)(?::\d+)?)$`)
-	streaming       = false
-	dataChannel     *webrtc.DataChannel
-)
-
-// liveCmd represents the auth command
 var liveCmd = &cobra.Command{
 	Use:   "live",
 	Short: "Live share your terminal via WebRTC to browser",
@@ -379,5 +363,5 @@ func init() {
 	liveCmd.Flags().StringP("pass", "p", "", "TURN server password")
 	liveCmd.Flags().StringP("addr", "a", "", "TURN server address with optional port (<server>[:<port>])")
 	liveCmd.Flags().BoolP("no-turn", "n", false, fmt.Sprintf("do NOT use the offical %s TURN servers", Application))
-	recordCmd.AddCommand(liveCmd)
+	root.AddCommand(liveCmd)
 }

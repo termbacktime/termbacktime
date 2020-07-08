@@ -32,7 +32,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// authCmd represents the auth command.
 var authCmd = &cobra.Command{
 	Use:   "auth",
 	Short: "Manage GitHub API authentication",
@@ -104,5 +103,5 @@ var authCmd = &cobra.Command{
 
 func init() {
 	authCmd.Flags().StringP("set-token", "s", "", "manually set a GitHub auth token")
-	recordCmd.AddCommand(authCmd)
+	root.AddCommand(authCmd)
 }

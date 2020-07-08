@@ -34,7 +34,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// playCmd represents the auth command.
 var playCmd = &cobra.Command{
 	Use:   "play [hash]",
 	Short: "Play terminal recordings",
@@ -113,5 +112,5 @@ var playCmd = &cobra.Command{
 }
 
 func init() {
-	recordCmd.AddCommand(playCmd)
+	root.AddCommand(playCmd)
 }
