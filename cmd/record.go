@@ -41,6 +41,8 @@ import (
 )
 
 var recordCmd = &cobra.Command{
+	Use:   "record",
+	Short: "Start terminal recording",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(GithubToken) <= 0 {
 			GithubToken = viper.GetString("token")
@@ -132,11 +134,6 @@ var recordCmd = &cobra.Command{
 
 		fmt.Println(au.Green(au.Bold("Recording started!\r\n")))
 
-		// Track started recordings
-		Track("recordings", map[string]interface{}{
-			"name": "started",
-		})
-
 		// Read from the PTY into a buffer.
 		rectime := time.Now()
 		bufout := make([]byte, 4096)
@@ -190,10 +187,6 @@ var recordCmd = &cobra.Command{
 						return upload(rec, cmd)
 					} else if no.MatchString(text) {
 						fmt.Println(au.Sprintf(au.Bold("Canceled!")))
-						// Track canceled recordings
-						Track("recordings", map[string]interface{}{
-							"name": "canceled",
-						})
 						break stdinloop
 					} else {
 						fmt.Printf(au.Sprintf(au.Bold("\r\nSave to Gist? [y/n]: ")))
@@ -206,4 +199,8 @@ var recordCmd = &cobra.Command{
 		}
 		return nil
 	},
+}
+
+func init() {
+	root.AddCommand(recordCmd)
 }

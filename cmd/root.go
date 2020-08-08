@@ -47,7 +47,8 @@ var root = &cobra.Command{
 		}
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return recordCmd.Execute()
+		// Show help by default if no commands are provided
+		return cmd.Help()
 	},
 }
 

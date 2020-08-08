@@ -35,6 +35,7 @@ var (
 	Application   = "termbacktime"
 	GistAPI       = "https://api.github.com/gists"
 	PlaybackURL   = "https://termbackti.me"
+	LiveURL       = "https://xterm.live"
 	Broker        = "wss://broker.termbackti.me"
 	APIEndpoint   = "https://api.termbackti.me"
 	Revision      = "0000000"
@@ -42,12 +43,11 @@ var (
 	ConfigType    = "json"
 	STUNServerOne = "stun:stun1.l.google.com:19302"
 	STUNServerTwo = "stun:stun2.l.google.com:19302"
-	Analytics     = ""
 	HomeDir       = getHome()
 	Username      = uuid()
 )
 
-// Base unexported application variables.
+// Base application variables.
 var (
 	versionTemplate = fmt.Sprintf("%s - %s/ - version=%s revision=%s (%s)\r\n",
 		Application, PlaybackURL, Version, Revision, runtime.Version())
@@ -59,6 +59,8 @@ var (
 	spinner      = spin.New("%s Working...")
 	skipConfig   = map[string]bool{
 		"completion": true,
+		"help":       true,
+		Application:  true,
 	}
 	webrtcConfig = webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
@@ -71,5 +73,4 @@ var (
 	turnMatch       = regexp.MustCompile(`^(?:([^:]+)?(?::([^@]+))?@)?((?:[^:]+)(?::\d+)?)$`)
 	streaming       = false
 	dataChannel     *webrtc.DataChannel
-	mixpanel        = "https://api.mixpanel.com/%s/?ip=1"
 )

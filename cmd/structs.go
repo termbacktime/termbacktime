@@ -117,7 +117,7 @@ type TURNServer struct {
 	Credential string `json:"credential,omitempty"`
 }
 
-// TURNCredentials is the autorization creds for official TURN servers
+// TURNCredentials is the authorization creds for official TURN servers
 type TURNCredentials struct {
 	URLs       []string `json:"servers,omitempty"`
 	Username   string   `json:"username,omitempty"`
