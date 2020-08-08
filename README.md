@@ -39,14 +39,16 @@ termbacktime auth
 * _GitHub authorization is NOT required for live terminal sharing._
 
 ## Recording
+#### Endpoint: https://termbackti.me/
 After authorizing [TermBackTime] with GitHub simply run `termbacktime record` to start recording!
 Please see `termbacktime help` for more options.
 
 ## Live terminal sharing (BETA)
+##### Endpoint: https://xterm.live/
 To start sharing your terminal over the web via [WebRTC], simply run `termbacktime live` and give the provided link to someone. Please see `termbacktime help live` for more options.
 - This uses a [broker server] via [WebSockets] to handle [signaling]. Once the [data channel] via [WebRTC] is established the WebSocket connection is closed.
 
-##### STUN options
+###### STUN options
 For now [TermBackTime] uses Google's STUN servers unless changed at compile time.
 ```shell
 STUNServerOne = "stun:stun1.l.google.com:19302"
@@ -68,12 +70,13 @@ A TURN server is used to relay WebRTC data between clients. Please see https://w
 
 ## Development
 You can build your own development builds via `make build-dev` or `make build-crosscompile-dev`.
-I provide development server endpoints for playback + live terminal, login, and WebRTC signaling at:
+I provide development server endpoints for playback, live terminal, login, and WebRTC signaling at:
 
-- [dev.termbackti.me](https://dev.termbackti.me/)
-- [dev-login.termbackti.me](https://dev-login.termbackti.me/)
-- [dev-api.termbackti.me](https://dev-api.termbackti.me/)
-- [dev-broker.termbackti.me](https://dev-broker.termbackti.me/)
+- [dev.termbackti.me](https://dev.termbackti.me/) (Main Site)
+- [dev-login.termbackti.me](https://dev-login.termbackti.me/) (OAuth)
+- [dev-api.termbackti.me](https://dev-api.termbackti.me/) (TURN Credentials API)
+- [dev-broker.termbackti.me](https://dev-broker.termbackti.me/) (WebSocket Broker)
+- [dev.xterm.live](https://dev.xterm.live/) (Live Terminal)
 
 Please note that these endpoints are under active development and may change or be unavailable at any time.
 
