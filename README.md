@@ -20,7 +20,7 @@ To install a different version of [Go]:
  ./install.sh <version>
 ```
 
-For example, `1.13.11` would be `./install.sh 1.13.11`
+For example, `1.13.15` would be `./install.sh 1.13.15`
 
 If you already have [Go] installed, you can manually install:
 ```shell
@@ -39,11 +39,11 @@ termbacktime auth
 * _GitHub authorization is NOT required for live terminal sharing._
 
 ## Recording
-After authorizing [TermBackTime] with GitHub simply run `termbacktime` to start recording!
-Please see `termbacktime --help` for more options.
+After authorizing [TermBackTime] with GitHub simply run `termbacktime record` to start recording!
+Please see `termbacktime help` for more options.
 
 ## Live terminal sharing (BETA)
-To start sharing your terminal over the web via [WebRTC], simply run `termbacktime live` and give the provided link to someone. Please see `termbacktime live --help` for more options.
+To start sharing your terminal over the web via [WebRTC], simply run `termbacktime live` and give the provided link to someone. Please see `termbacktime help live` for more options.
 - This uses a [broker server] via [WebSockets] to handle [signaling]. Once the [data channel] via [WebRTC] is established the WebSocket connection is closed.
 
 ##### STUN options

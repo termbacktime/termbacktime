@@ -102,11 +102,6 @@ var playCmd = &cobra.Command{
 		}
 		fmt.Println(au.Green(au.Bold("\r\nPlayback finished.")))
 
-		// Track played recordings
-		Track("recordings", map[string]interface{}{
-			"name": "played",
-		})
-
 		return nil
 	},
 }

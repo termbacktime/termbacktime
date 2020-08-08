@@ -2,14 +2,15 @@
 PBURL=https://termbackti.me
 BROKER=wss://broker.termbackti.me
 API=https://api.termbackti.me
+LIVE=https://xterm.live
 
 # Development servers
 DEVPBURL=https://dev.termbackti.me
 DEVBROKER=wss://dev-broker.termbackti.me
 DEVAPI=https://dev-api.termbackti.me
+DEVLIVE=https://dev.xterm.live
 
 # Misc settings
-ANALYTICS=07d66b96ce0af1bc1bb721c58417df66
 GISTAPI=https://api.github.com/gists
 GITURL=github.com/termbacktime/termbacktime
 APP_NAME=termbacktime
@@ -34,11 +35,11 @@ LDFLAGS=-X '${GITURL}/cmd.Application=${APP_NAME}' -X '${GITURL}/cmd.Version=${V
 	-X '${GITURL}/cmd.PlaybackURL=${PBURL}'  -X '${GITURL}/cmd.GistAPI=${GISTAPI}' -X '${GITURL}/cmd.Broker=${BROKER}' \
 	-X '${GITURL}/cmd.GistFileName=${GFILE_NAME}' -X '${GITURL}/cmd.ConfigType=${shell echo ${CONFIG_TYPE} | tr '[:upper:]' '[:lower:]'}' \
 	-X '${GITURL}/cmd.STUNServerOne=${STUN_SERVER1}' -X '${GITURL}/cmd.STUNServerTwo=${STUN_SERVER2}' -X '${GITURL}/cmd.APIEndpoint=${API}' \
-	-X '${GITURL}/cmd.Analytics=${ANALYTICS}'
+	-X '${GITURL}/cmd.LiveURL=${LIVE}'
 
 # Development compiler flag options
 DEVLDFLAGS=-X '${GITURL}/cmd.Application=${APP_NAME}-dev' -X '${GITURL}/cmd.Revision=DEV-${REV}' -X '${GITURL}/cmd.PlaybackURL=${DEVPBURL}' \
-	-X '${GITURL}/cmd.Broker=${DEVBROKER}' -X '${GITURL}/cmd.APIEndpoint=${DEVAPI}'
+	-X '${GITURL}/cmd.Broker=${DEVBROKER}' -X '${GITURL}/cmd.APIEndpoint=${DEVAPI}' -X '${GITURL}/cmd.LiveURL=${DEVLIVE}'
 
 build:
 	go build -o ./builds/$(APP_NAME) -v -ldflags "${LDFLAGS}"
@@ -49,7 +50,6 @@ build-dev:
 build-crosscompile:
 	make clean
 	GOOS=darwin GOARCH=amd64 go build -o ./builds/$(BINARY_DARWIN) -v -ldflags "${LDFLAGS}"
-	GOOS=darwin GOARCH=386 go build -o ./builds/$(BINARY_DARWIN)-386 -v -ldflags "${LDFLAGS}"
 	GOOS=linux GOARCH=amd64 go build -o ./builds/$(BINARY_UNIX) -v -ldflags "${LDFLAGS}"
 	GOOS=linux GOARCH=386 go build -o ./builds/$(BINARY_UNIX)-386 -v -ldflags "${LDFLAGS}"
 	GOOS=linux GOARCH=arm64 go build -o ./builds/$(BINARY_UNIX)-arm64 -v -ldflags "${LDFLAGS}"
@@ -61,7 +61,6 @@ build-crosscompile:
 build-crosscompile-dev:
 	make clean
 	GOOS=darwin GOARCH=amd64 go build -o ./builds/$(BINARY_DARWIN)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
-	GOOS=darwin GOARCH=386 go build -o ./builds/$(BINARY_DARWIN)-386-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=amd64 go build -o ./builds/$(BINARY_UNIX)-dev -v-ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=386 go build -o ./builds/$(BINARY_UNIX)-386-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=arm64 go build -o ./builds/$(BINARY_UNIX)-arm64-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"

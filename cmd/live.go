@@ -116,10 +116,6 @@ var liveCmd = &cobra.Command{
 					webrtcConfig.ICEServers = append(webrtcConfig.ICEServers, tserver)
 					fmt.Println(au.Green(au.Sprintf(au.Bold("Access granted: %s\nUsername: %s\nPassword: %s\r\n"),
 						tserver.URLs, tserver.Username, tserver.Credential)))
-					// Track granted TURN credentials
-					Track("live", map[string]interface{}{
-						"name": "granted",
-					})
 				} else {
 					return Error(fmt.Errorf("could not get TURN server credentials from %s - please try again later", endpoint))
 				}
@@ -175,12 +171,7 @@ var liveCmd = &cobra.Command{
 		})
 
 		spinner.Stop()
-		fmt.Println(au.Sprintf(au.Bold("Live playback: %s\r"), fmt.Sprintf("%s/live/#%s", PlaybackURL, chn)))
-
-		// Track waiting live streams
-		Track("live", map[string]interface{}{
-			"name": "waiting",
-		})
+		fmt.Println(au.Sprintf(au.Bold("Live playback: %s\r"), fmt.Sprintf("%s/%s", LiveURL, chn)))
 
 		go func() {
 			ticker := time.NewTicker(1 * time.Second)
@@ -323,11 +314,6 @@ func startpty() {
 	// XXX: Send this over the data channel?
 	fmt.Println(au.Green(au.Bold("Live streaming started!\r\n")))
 
-	// Track started live streams
-	Track("live", map[string]interface{}{
-		"name": "started",
-	})
-
 	// Read from the PTY into a buffer.
 	bufout := make([]byte, 4096)
 	for {
@@ -350,10 +336,6 @@ func startpty() {
 
 	_ = terminal.Restore(int(os.Stdin.Fd()), oldState)
 	fmt.Println(au.Bold(au.Green("\r\nLive streaming ended!")))
-	// Track ended live streams
-	Track("live", map[string]interface{}{
-		"name": "ended",
-	})
 	os.Exit(0)
 }
 

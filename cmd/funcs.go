@@ -139,7 +139,6 @@ func InitConfig(fn func() (string, bool)) (string, bool) {
 		if !fileExists(cfgFile) {
 			viper.Set("version-check", true)
 			viper.Set("login", uuid()) // Give a unique default login ID
-			viper.Set("analytics", len(Analytics) > 0)
 			if err := viper.WriteConfig(); err == nil {
 				created = true
 				fmt.Println(au.Sprintf(au.Bold("Created config: %s\n"), viper.ConfigFileUsed()))
@@ -190,33 +189,6 @@ func saveToken(data map[string]interface{}, man bool) {
 		if data["login"] != nil {
 			viper.Set("login", data["login"].(string))
 		}
-		properties := map[string]interface{}{}
-		for key, value := range data {
-			if _, ok := data[key]; ok {
-				if key != "token" {
-					key := fmt.Sprintf("gh_%s", key)
-					viper.Set(key, value)
-					properties[key] = value
-				}
-			}
-		}
-		if data["name"] != nil {
-			name := data["name"].(string)
-			if strings.Contains(name, " ") {
-				fields := strings.Fields(data["name"].(string))
-				properties["$first_name"] = fields[0]
-				properties["$last_name"] = fields[1]
-			} else {
-				properties["$first_name"] = name
-			}
-		}
-		if data["avatar_url"] != nil {
-			properties["$avatar"] = data["avatar_url"].(string)
-		}
-		if data["email"] != nil {
-			properties["$email"] = data["email"].(string)
-		}
-		MixUser(properties)
 	}
 	if err := viper.WriteConfig(); err == nil {
 		fmt.Println(au.Sprintf(au.Bold("\nSaved config: %s"), viper.ConfigFileUsed()))
@@ -326,11 +298,6 @@ func upload(rec Recording, cmd *cobra.Command) error {
 			_, _ = client.Do(req)
 		}
 	}
-
-	// Track successful recordings
-	Track("recordings", map[string]interface{}{
-		"name": "published",
-	})
 
 	return nil
 }

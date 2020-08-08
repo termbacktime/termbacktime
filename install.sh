@@ -9,6 +9,8 @@
 #
 set -e
 
+DLINK="https://golang.org/dl"
+
 function installtbt () {
 	echo "Fetching termbacktime..."
 	echo ""
@@ -28,13 +30,32 @@ elif [ -n "`$SHELL -c 'echo $BASH_VERSION'`" ]; then
 	SHELL_PROFILE="bashrc"
 fi
 
-get_latest () {
-	local fetch="$*"
-	$fetch "https://golang.org/dl/" | grep -v -E 'go[0-9\.]+(beta|rc)' | grep -E -o 'go[0-9\.]+' | grep -E -o '[0-9]\.[0-9]+(\.[0-9]+)?' | sort -V | uniq
+latest () {
+	$* "$DLINK/?mode=json" | \
+		grep -v -E 'go[0-9\.]+(beta|rc)' | \
+		grep -E -o 'go[0-9\.]+' | \
+		grep -E -o '[0-9]\.[0-9]+(\.[0-9]+)?' | \
+		sort -V | uniq | tail -1
 }
+
+if command -v "wget" >/dev/null; then
+	FETCH="wget -qO-"
+elif command -v "curl" >/dev/null; then
+	FETCH="curl --silent"
+else
+	echo "Missing both wget and curl!"
+	exit 3
+fi
 
 if [ -x "$(command -v go)" ]; then
 	echo "Go found: $(go version)"
+	echo "Checking for updates..."
+	LAST=$(latest "$FETCH")
+	if echo "$LAST" | grep -q -E '[0-9]\.[0-9]+(\.[0-9]+)?'; then
+		echo "Latest version: go$LAST"
+		echo ""
+		# XXX: Offer to upgrade golang
+	fi;
 	if [ -x "$(command -v termbacktime)" ]; then
 		echo "termbacktime found: $(termbacktime --version)"
 		echo "Updating $GOPATH/src/github.com/termbacktime/termbacktime in 5 seconds..."
@@ -50,22 +71,15 @@ else
 		GVERSION="$1"
 	else
 		echo "Finding latest Go version..."
-		if command -v "wget" >/dev/null; then
-			FETCH="wget -qO-"
-		elif command -v "curl" >/dev/null; then
-			FETCH="curl --silent"
-		else
-			echo "Missing both wget and curl!"
-			exit 3
-		fi
-		LAST=$(get_latest "$FETCH" | tail -1)
+		LAST=$(latest "$FETCH")
 		if echo "$LAST" | grep -q -E '[0-9]\.[0-9]+(\.[0-9]+)?'; then
-			echo "Latest found: $LAST"
+			echo "Latest version: go$LAST"
 			GVERSION=$LAST
 		else
 			echo "Could not find latest version, defaulting to $GVERSION"
 		fi
 	fi
+	echo ""
 	GOPATH="$HOME/go"
 	GOROOT="$HOME/.goroot"
 	TMPDIR=$(mktemp -d -t goinstall-XXXXXXXXXX)
@@ -76,15 +90,15 @@ else
 
 	ARCHCASE=`uname -m`
 	case "$ARCHCASE" in
-		i?86) ARCH="386" ;;
-		x86_64) ARCH="amd64" ;;
-		ARMv8) ARCH="arm64" ;;
-		ARMv6) ARCH="armv6l" ;;
+		i* | .*386.*) ARCH="386" ;;
+		x*) ARCH="amd64" ;;
+		ARMv8 | AArch64) ARCH="arm64" ;;
+		ARMv6 | ARMv7l?) ARCH="armv6l" ;;
 	esac
 	DISTCASE=`uname -s`
 	case "$DISTCASE" in
 			Linux) DIST="linux" ;;
-			Darwin) DIST="darwin" ;;
+			Darwin) DIST="darwin" ARCH="amd64" ;; # No 32-Bit support!
 	esac
 	GFILE="go$GVERSION.${DIST}-${ARCH}.tar.gz"
 
@@ -108,9 +122,9 @@ else
 	chmod 755 "$GOROOT"
 
 	if command -v "wget" >/dev/null; then
-		wget --no-verbose https://storage.googleapis.com/golang/$GFILE -O $TMPDIR/$GFILE
+		wget --no-verbose $DLINK/$GFILE -O $TMPDIR/$GFILE
 	elif command -v "curl" >/dev/null; then
-		curl --silent -o $TMPDIR/$GFILE https://storage.googleapis.com/golang/$GFILE
+		curl --silent -o $TMPDIR/$GFILE $DLINK/$GFILE
 	fi
 	if [ $? -ne 0 ]; then
 		echo "Go download failed! Exiting."
