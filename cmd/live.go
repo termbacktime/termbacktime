@@ -38,7 +38,7 @@ import (
 	au "github.com/logrusorgru/aurora"
 	"github.com/pion/webrtc/v2"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
+	terminal "golang.org/x/term"
 )
 
 var liveCmd = &cobra.Command{
