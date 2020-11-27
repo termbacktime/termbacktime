@@ -61,7 +61,7 @@ build-crosscompile:
 build-crosscompile-dev:
 	make clean
 	GOOS=darwin GOARCH=amd64 go build -o ./builds/$(BINARY_DARWIN)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
-	GOOS=linux GOARCH=amd64 go build -o ./builds/$(BINARY_UNIX)-dev -v-ldflags "${LDFLAGS} ${DEVLDFLAGS}"
+	GOOS=linux GOARCH=amd64 go build -o ./builds/$(BINARY_UNIX)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=386 go build -o ./builds/$(BINARY_UNIX)-386-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=arm64 go build -o ./builds/$(BINARY_UNIX)-arm64-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=arm GOARM=7 go build -o ./builds/$(BINARY_UNIX)-armv7-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"

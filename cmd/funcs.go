@@ -41,8 +41,8 @@ import (
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/mod/semver"
+	terminal "golang.org/x/term"
 )
 
 // shell attempts to return the users terminal shell.
