@@ -14,9 +14,9 @@ DLINK="https://golang.org/dl"
 function installtbt () {
 	echo "Fetching termbacktime..."
 	echo ""
-	cd ; go get -u -v github.com/termbacktime/termbacktime &
+	cd ; go get -u -v louist.dev/termbacktime &
 	wait < <(jobs -p)
-	cd "$GOPATH/src/github.com/termbacktime/termbacktime"
+	cd "$GOPATH/src/louist.dev/termbacktime"
 	echo ""
 	echo "Running make install..."
 	make install
@@ -58,7 +58,7 @@ if [ -x "$(command -v go)" ]; then
 	fi;
 	if [ -x "$(command -v termbacktime)" ]; then
 		echo "termbacktime found: $(termbacktime --version)"
-		echo "Updating $GOPATH/src/github.com/termbacktime/termbacktime in 5 seconds..."
+		echo "Updating $GOPATH/src/louist.dev/termbacktime in 5 seconds..."
 	else
 		echo "Installing termbacktime to $GOPATH in 5 seconds..."
 	fi;

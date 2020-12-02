@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package main
+package main // import louist.dev/termbacktime
 
 import (
-	root "github.com/termbacktime/termbacktime/cmd"
+	root "louist.dev/termbacktime/cmd"
 )
 
 func main() {
