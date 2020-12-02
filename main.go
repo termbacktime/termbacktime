@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package main // import louist.dev/termbacktime
+package main // import "louist.dev/termbacktime"
 
 import (
 	root "louist.dev/termbacktime/cmd"
