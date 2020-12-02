@@ -26,7 +26,7 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
-	"github.com/termbacktime/termbacktime/templates"
+	"louist.dev/termbacktime/templates"
 )
 
 var completionCmd = &cobra.Command{
