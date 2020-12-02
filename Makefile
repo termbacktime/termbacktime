@@ -48,7 +48,6 @@ build-dev:
 	go build -o ./builds/$(APP_NAME)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 
 build-crosscompile:
-	make update-pkg-cache
 	make clean
 	GOOS=darwin GOARCH=amd64 go build -o ./builds/$(BINARY_DARWIN) -v -ldflags "${LDFLAGS}"
 	GOOS=linux GOARCH=amd64 go build -o ./builds/$(BINARY_UNIX) -v -ldflags "${LDFLAGS}"
@@ -98,6 +97,3 @@ run:
 
 run-dev:
 	go run -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}" ./main.go
-
-update-pkg-cache:
-	cd .. && GOPROXY=https://proxy.golang.org GO111MODULE=on go get go.lou.ist/termbacktime@$(VERSION)
