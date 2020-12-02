@@ -24,8 +24,8 @@ For example, `1.14.12` would be `./install.sh 1.14.12`
 
 If you already have [Go] installed, you can manually install:
 ```shell
-go get -u github.com/termbacktime/termbacktime
-cd $GOPATH/src/github.com/termbacktime/termbacktime
+go get -u louist.dev/termbacktime 
+cd $GOPATH/src/louist.dev/termbacktime
 make install
 ```
 
