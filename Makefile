@@ -96,7 +96,7 @@ upx: upx-check
 	upx --brute ./builds/*
 
 upx-installed: upx-check
-	upx --brute $(GOPATH)/bin/$(APP_NAME)*
+	upx -5 $(GOPATH)/bin/$(APP_NAME)*
 
 # upx does not support freebsd
 upx-crosscompile: upx-check
