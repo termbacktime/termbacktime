@@ -31,7 +31,7 @@ BINARY_FREEBSD=$(APP_NAME)-$(REV)-freebsd
 VERSION=$(shell cat ./VERSION)
 
 # Production compiler flags
-LDFLAGS=-X '${GITURL}/cmd.Application=${APP_NAME}' -X '${GITURL}/cmd.Version=${VERSION}' -X '${GITURL}/cmd.Revision=${REV}' \
+LDFLAGS=-s -w -X '${GITURL}/cmd.Application=${APP_NAME}' -X '${GITURL}/cmd.Version=${VERSION}' -X '${GITURL}/cmd.Revision=${REV}' \
 	-X '${GITURL}/cmd.PlaybackURL=${PBURL}'  -X '${GITURL}/cmd.GistAPI=${GISTAPI}' -X '${GITURL}/cmd.Broker=${BROKER}' \
 	-X '${GITURL}/cmd.GistFileName=${GFILE_NAME}' -X '${GITURL}/cmd.ConfigType=${shell echo ${CONFIG_TYPE} | tr '[:upper:]' '[:lower:]'}' \
 	-X '${GITURL}/cmd.STUNServerOne=${STUN_SERVER1}' -X '${GITURL}/cmd.STUNServerTwo=${STUN_SERVER2}' -X '${GITURL}/cmd.APIEndpoint=${API}' \
@@ -41,14 +41,16 @@ LDFLAGS=-X '${GITURL}/cmd.Application=${APP_NAME}' -X '${GITURL}/cmd.Version=${V
 DEVLDFLAGS=-X '${GITURL}/cmd.Application=${APP_NAME}-dev' -X '${GITURL}/cmd.Revision=DEV-${REV}' -X '${GITURL}/cmd.PlaybackURL=${DEVPBURL}' \
 	-X '${GITURL}/cmd.Broker=${DEVBROKER}' -X '${GITURL}/cmd.APIEndpoint=${DEVAPI}' -X '${GITURL}/cmd.LiveURL=${DEVLIVE}'
 
-build:
+# Check if upx is installed
+UPX := $(shell command -v upx 2> /dev/null)
+
+build: initial
 	go build -o ./builds/$(APP_NAME) -v -ldflags "${LDFLAGS}"
 
-build-dev:
+build-dev: initial
 	go build -o ./builds/$(APP_NAME)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 
-build-crosscompile:
-	make clean
+build-crosscompile: initial
 	GOOS=darwin GOARCH=amd64 go build -o ./builds/$(BINARY_DARWIN) -v -ldflags "${LDFLAGS}"
 	GOOS=linux GOARCH=amd64 go build -o ./builds/$(BINARY_UNIX) -v -ldflags "${LDFLAGS}"
 	GOOS=linux GOARCH=386 go build -o ./builds/$(BINARY_UNIX)-386 -v -ldflags "${LDFLAGS}"
@@ -58,8 +60,7 @@ build-crosscompile:
 	GOOS=freebsd GOARCH=amd64 go build -o ./builds/$(BINARY_FREEBSD) -v -ldflags "${LDFLAGS}"
 	GOOS=freebsd GOARCH=386 go build -o ./builds/$(BINARY_FREEBSD)-386 -v -ldflags "${LDFLAGS}"
 
-build-crosscompile-dev:
-	make clean
+build-crosscompile-dev: initial
 	GOOS=darwin GOARCH=amd64 go build -o ./builds/$(BINARY_DARWIN)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=amd64 go build -o ./builds/$(BINARY_UNIX)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=386 go build -o ./builds/$(BINARY_UNIX)-386-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
@@ -69,11 +70,13 @@ build-crosscompile-dev:
 	GOOS=freebsd GOARCH=amd64 go build -o ./builds/$(BINARY_FREEBSD)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=freebsd GOARCH=386 go build -o ./builds/$(BINARY_FREEBSD)-386-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 
-install:
+install: initial
 	go install -i -ldflags "${LDFLAGS}"
+	make upx-installed
 
-install-dev:
+install-dev: initial
 	go build -i -o $(GOPATH)/bin/$(APP_NAME)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
+	make upx-installed
 
 uninstall:
 ifneq (,$(shell which termbacktime))
@@ -84,16 +87,31 @@ ifneq (,$(shell which termbacktime-dev))
 endif
 	go clean -i
 
-test:
-	go vet ./...
-	go test -v ./...
+upx-check:
+ifndef UPX
+	$(error "upx is not installed; please see https://upx.github.io/ for more information")
+endif
 
-clean:
+upx: upx-check
+	upx --brute ./builds/*
+
+upx-installed: upx-check
+	upx --brute $(GOPATH)/bin/$(APP_NAME)*
+
+# upx does not support freebsd
+upx-crosscompile: upx-check
+	upx --brute ./builds/$(BINARY_DARWIN)* ./builds/$(BINARY_UNIX)*
+
+initial:
 	go clean
 	rm -rf ./builds/termbacktime*
+	go vet ./...
 
 run:
 	go run -v -ldflags "${LDFLAGS}" ./main.go
 
 run-dev:
 	go run -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}" ./main.go
+
+update-pkg-cache:
+	cd .. && GOPROXY=https://proxy.golang.org GO111MODULE=on go get ${GITURL}@$(VERSION)
