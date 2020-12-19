@@ -1,5 +1,5 @@
 # [TermBackTime]
-Terminal recording and playback, written in [Go]. All terminal recordings are currently saved as private [Gist] postings.
+Terminal recording and playback, written in [Go]. All terminal recordings are currently saved as secret [Gist] postings.
 
 ### Playback Example
 ![TermBackTime - Playback](https://i.imgur.com/RtLL8e2.gif)
@@ -24,7 +24,7 @@ For example, `1.14.12` would be `./install.sh 1.14.12`
 
 If you already have [Go] installed, you can manually install:
 ```shell
-go get -u louist.dev/termbacktime 
+go get -u louist.dev/termbacktime
 cd $GOPATH/src/louist.dev/termbacktime
 make install
 ```
@@ -76,7 +76,6 @@ I provide development server endpoints for playback + live terminal, login, and 
 - [dev-broker.termbackti.me](https://dev-broker.termbackti.me/)
 
 Please note that these endpoints are under active development and may change or be unavailable at any time.
-
 
 [TermBackTime]: https://termbackti.me/
 [~/auth]: https://termbackti.me/auth
