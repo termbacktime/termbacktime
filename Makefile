@@ -72,10 +72,14 @@ build-crosscompile-dev: initial
 
 install: initial
 	go install -i -ldflags "${LDFLAGS}"
+
+install-upx: initial install
 	make upx-installed
 
 install-dev: initial
 	go build -i -o $(GOPATH)/bin/$(APP_NAME)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
+
+install-dev-upx: initial install-dev
 	make upx-installed
 
 uninstall:
