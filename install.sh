@@ -19,7 +19,7 @@ function installtbt () {
 	cd "$GOPATH/src/louist.dev/termbacktime"
 	echo ""
 	echo "Running make install..."
-	make install
+	make install-upx
 	echo ""
 	termbacktime --version
 }

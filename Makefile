@@ -73,14 +73,12 @@ build-crosscompile-dev: initial
 install: initial
 	go install -i -ldflags "${LDFLAGS}"
 
-install-upx: initial install
-	make upx-installed
+install-upx: initial install upx-installed
 
 install-dev: initial
 	go build -i -o $(GOPATH)/bin/$(APP_NAME)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 
-install-dev-upx: initial install-dev
-	make upx-installed
+install-dev-upx: initial install-dev upx-installed
 
 uninstall:
 ifneq (,$(shell which termbacktime))
@@ -97,14 +95,14 @@ ifndef UPX
 endif
 
 upx: upx-check
-	upx --brute ./builds/*
+	upx -5 ./builds/*
 
 upx-installed: upx-check
 	upx -5 $(GOPATH)/bin/$(APP_NAME)*
 
 # upx does not support freebsd
 upx-crosscompile: upx-check
-	upx --brute ./builds/$(BINARY_DARWIN)* ./builds/$(BINARY_UNIX)*
+	upx -5 ./builds/$(BINARY_DARWIN)* ./builds/$(BINARY_UNIX)*
 
 initial:
 	go clean

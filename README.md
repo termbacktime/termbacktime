@@ -66,6 +66,24 @@ A STUN server is used to detect network addresses. Please see https://en.wikiped
 
 A TURN server is used to relay WebRTC data between clients. Please see https://webrtc.org/getting-started/turn-server for more information.
 
+## Contributing
+Please feel free to open a PR or an issue on GitHub. Convention for this repository is to fork it, create a branch `feature/<feature name>`
+in your fork based on `master` branch, and commit changes there. Once your changes are ready to merge back into this repository, squash your feature
+branch into one commit and open a PR from your repository's feature branch into the `dev` branch of this repository. Please make sure your `master`
+branch is up to date with `master` in this repo, and rebase your feature onto the tip of `master`.
+
+## Reporting Issues
+> Please do not report security related issues, vulnerabilities or bugs to the issue tracker, or elsewhere in public. Instead report sensitive bugs by email to <security@termbackti.me>.
+- Open an [Issue](issues/new) with a clear and descriptive title.
+  - Until we can discover whether it is a bug or not, we ask that you label it with `possible-bug`.
+- Explain the behavior you would expect and the actual behavior.
+- Please provide as much context as possible and describe the *reproduction steps* that someone else can follow to recreate the issue on their own.
+  - Describe the current behavior and explain which behavior you expected to see instead and why.
+  - Any availble stack traces or screenshots.
+  - OS, platform and version. (Windows, Linux, macOS, x86, ARM)
+  - If possible, please provide the `termbacktime --version` string.
+    - If manually compiling please provide `go version`, termbacktime version located in the `VERSION` file, and the revision with `git rev-parse --short HEAD`.
+
 ## Development
 You can build your own development builds via `make build-dev` or `make build-crosscompile-dev`.
 I provide development server endpoints for playback + live terminal, login, and WebRTC signaling at:

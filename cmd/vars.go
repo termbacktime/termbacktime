@@ -26,7 +26,7 @@ import (
 	"runtime"
 
 	"github.com/caarlos0/spin"
-	"github.com/pion/webrtc/v2"
+	"github.com/pion/webrtc/v3"
 )
 
 // Exported default compile settings.
@@ -72,5 +72,7 @@ var (
 	tserver         = webrtc.ICEServer{}
 	turnMatch       = regexp.MustCompile(`^(?:([^:]+)?(?::([^@]+))?@)?((?:[^:]+)(?::\d+)?)$`)
 	streaming       = false
+	connected       = false
 	dataChannel     *webrtc.DataChannel
+	peerConnection  *webrtc.PeerConnection
 )

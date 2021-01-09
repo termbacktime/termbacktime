@@ -30,6 +30,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/bits"
 	"net/http"
 	"os"
 	"strings"
@@ -350,4 +351,13 @@ func fileExists(file string) bool {
 		return false
 	}
 	return !info.IsDir()
+}
+
+// bytesToSize converts byte count to human readable string
+func bytesToSize(bytes uint64) string {
+	if bytes < 1024 {
+		return fmt.Sprintf("%dB", bytes)
+	}
+	base := uint(bits.Len64(bytes) / 10)
+	return fmt.Sprintf("%.1f%cB", float64(bytes)/float64(uint64(1<<(base*10))), " KMGTPE"[base])
 }
