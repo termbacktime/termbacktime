@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -36,9 +35,11 @@ import (
 	"github.com/creack/pty"
 	"github.com/gorilla/websocket"
 	au "github.com/logrusorgru/aurora"
-	"github.com/pion/webrtc/v2"
+	"github.com/pion/webrtc/v3"
 	"github.com/spf13/cobra"
 	terminal "golang.org/x/term"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 var liveCmd = &cobra.Command{
@@ -134,11 +135,23 @@ var liveCmd = &cobra.Command{
 		}
 		defer client.Close()
 
-		peerConnection, err := webrtc.NewPeerConnection(webrtcConfig)
+		peerConnection, err = webrtc.NewPeerConnection(webrtcConfig)
 		if err != nil {
 			fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
 			os.Exit(1)
 		}
+
+		peerConnection.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
+			connected = state <= 3
+			GetLogger().Write(fmt.Sprintf("[Peer] State changed: %s", state))
+			if !connected {
+				if dataChannel.ReadyState() == 2 {
+					if err := dataChannel.Close(); err != nil {
+						GetLogger().Write(fmt.Sprintf("[ERROR] %s", err))
+					}
+				}
+			}
+		})
 
 		dataChannel, err = peerConnection.CreateDataChannel("live-terminal", nil)
 		if err != nil {
@@ -152,13 +165,14 @@ var liveCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		err = peerConnection.SetLocalDescription(offer)
-		if err != nil {
+		gatherComplete := webrtc.GatheringCompletePromise(peerConnection)
+		if err := peerConnection.SetLocalDescription(offer); err != nil {
 			fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
 			os.Exit(1)
 		}
+		<-gatherComplete
 
-		encoded, err := EncodeOffer(offer)
+		encoded, err := EncodeOffer(*peerConnection.LocalDescription())
 		if err != nil {
 			fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
 			os.Exit(1)
@@ -166,7 +180,19 @@ var liveCmd = &cobra.Command{
 
 		dataChannel.OnOpen(func() {
 			if streaming == false {
+				GetLogger().Write("[Data] Remote peer connected!")
 				startpty()
+			}
+		})
+		dataChannel.OnError(func(err error) {
+			GetLogger().Write(fmt.Sprintf("[Data] Error: %s", err))
+		})
+		dataChannel.OnClose(func() {
+			GetLogger().Write("[Data] Remote peer disconnected!")
+		})
+		dataChannel.OnMessage(func(msg webrtc.DataChannelMessage) {
+			if !msg.IsString {
+				GetLogger().Write("[Data] Warning: unexpected binary message!")
 			}
 		})
 
@@ -271,8 +297,13 @@ func startpty() {
 	go func() {
 		for range ch {
 			if err := pty.InheritSize(os.Stdin, ptmx); err == nil {
-				if Width, Height, err := terminal.GetSize(int(os.Stdout.Fd())); err == nil {
-					_ = dataChannel.SendText(ToJSON(LiveLine{
+				Width, Height, err := terminal.GetSize(int(os.Stdout.Fd()))
+				if err != nil {
+					GetLogger().Write(fmt.Sprintf("[ERROR] %s", err))
+					continue
+				}
+				if connected {
+					dataChannel.SendText(ToJSON(LiveLine{
 						Command: "s",
 						Sizes:   []int{Width, Height},
 					}))
@@ -288,7 +319,7 @@ func startpty() {
 		fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
 		os.Exit(1)
 	}
-	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }()
+	defer func() { terminal.Restore(int(os.Stdin.Fd()), oldState) }()
 
 	// Write STDIN to PTY.
 	go func() {
@@ -299,20 +330,25 @@ func startpty() {
 				if err == io.EOF {
 					err = nil
 				} else {
-					log.Println(err)
+					GetLogger().Write(fmt.Sprintf("[ERROR] %s", err))
 				}
 				break
 			}
 			if !Closed {
 				if _, err = ptmx.Write(bufin[0:nr]); err != nil {
+					GetLogger().Write(fmt.Sprintf("[ERROR] %s", err))
 					break
 				}
 			}
 		}
 	}()
 
-	// XXX: Send this over the data channel?
-	fmt.Println(au.Green(au.Bold("Live streaming started!\r\n")))
+	if connected {
+		fmt.Println(au.Green(au.Bold("Live streaming started!\r\n")))
+		dataChannel.SendText(ToJSON(LiveLine{
+			Lines: []string{fmt.Sprint(au.Green(au.Bold("Live streaming started!\r\n")))},
+		}))
+	}
 
 	// Read from the PTY into a buffer.
 	bufout := make([]byte, 4096)
@@ -322,9 +358,11 @@ func startpty() {
 			line := string(bufout[0:nr])
 
 			// Send the line over the data channel
-			dataChannel.SendText(ToJSON(LiveLine{
-				Lines: []string{line},
-			}))
+			if connected {
+				dataChannel.SendText(ToJSON(LiveLine{
+					Lines: []string{line},
+				}))
+			}
 
 			// Write to STDOUT
 			os.Stdout.WriteString(line)
@@ -334,8 +372,30 @@ func startpty() {
 		break
 	}
 
-	_ = terminal.Restore(int(os.Stdin.Fd()), oldState)
+	if err := terminal.Restore(int(os.Stdin.Fd()), oldState); err != nil {
+		GetLogger().Write(fmt.Sprintf("[ERROR] %s", err))
+	}
 	fmt.Println(au.Bold(au.Green("\r\nLive streaming ended!")))
+
+	if dataChannel.ReadyState() == 2 {
+		if err := dataChannel.Close(); err != nil {
+			GetLogger().Write(fmt.Sprintf("[ERROR] %s", err))
+		}
+	}
+
+	if stats, ok := peerConnection.GetStats().GetDataChannelStats(dataChannel); ok {
+		formatter := message.NewPrinter(language.English)
+		GetLogger().Write(fmt.Sprintf("[Stats] Sent: %s / Recieved: %s -- %s",
+			formatter.Sprintf("%d", stats.MessagesSent),
+			formatter.Sprintf("%d", stats.MessagesReceived),
+			bytesToSize(stats.BytesSent+stats.BytesReceived),
+		))
+	}
+
+	if _, err := GetLogger().Dump().Remove(); err != nil {
+		fmt.Println(au.Sprintf(au.Red("\nError: failed to remove log: %s\n"), GetLogger().Name()))
+	}
+
 	os.Exit(0)
 }
 
