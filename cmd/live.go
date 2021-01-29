@@ -383,9 +383,9 @@ func startpty(shellPath string) {
 
 	if stats, ok := peerConnection.GetStats().GetDataChannelStats(dataChannel); ok {
 		formatter := message.NewPrinter(language.English)
-		GetLogger().Write(fmt.Sprintf("[Stats] Sent: %s / Recieved: %s -- %s",
-			formatter.Sprintf("%d", stats.MessagesSent),
+		GetLogger().Write(fmt.Sprintf("[Stats] RX: %s / TX: %s -- %s",
 			formatter.Sprintf("%d", stats.MessagesReceived),
+			formatter.Sprintf("%d", stats.MessagesSent),
 			bytesToSize(stats.BytesSent+stats.BytesReceived),
 		))
 	}
