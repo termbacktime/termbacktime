@@ -33,6 +33,7 @@ import (
 	"math/bits"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -49,10 +50,18 @@ import (
 // shell attempts to return the users terminal shell.
 // TODO: Improve shell detection.
 func shell() string {
-	if os.Getenv("SHELL") != "" {
-		return os.Getenv("SHELL")
+	shellPath := ""
+	if len(Shell) > 0 {
+		shellPath = Shell
+	} else if os.Getenv("SHELL") != "" {
+		shellPath = os.Getenv("SHELL")
 	}
-	return "/bin/bash"
+	if _, err := exec.LookPath(shellPath); err != nil {
+		str := "no valid terminal shell provided; use --shell or set SHELL environment variable"
+		fmt.Println(au.Sprintf(au.Red("Error: %v\n(error: %s)\n"), str, err))
+		os.Exit(1)
+	}
+	return shellPath
 }
 
 // Error stops the spinner whenever an error is thrown.

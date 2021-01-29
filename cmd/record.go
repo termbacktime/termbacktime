@@ -44,6 +44,7 @@ var recordCmd = &cobra.Command{
 	Use:   "record",
 	Short: "Start terminal recording",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		shellPath := shell() // Detect shell
 		if len(GithubToken) <= 0 {
 			GithubToken = viper.GetString("token")
 			if len(GithubToken) <= 0 {
@@ -57,7 +58,6 @@ var recordCmd = &cobra.Command{
 		}
 
 		// Start recording Object.
-		ccmd := shell()
 		rec := Recording{
 			Info: Info{
 				Arch: runtime.GOARCH,
@@ -65,14 +65,14 @@ var recordCmd = &cobra.Command{
 				Go:   runtime.Version(),
 			},
 			Started: time.Now().Unix(),
-			Title:   ccmd,
+			Title:   shellPath,
 		}
 		rec.setTerminalDimensions(true)
 
 		// Start PTY.
-		fmt.Println(au.Sprintf(au.Bold("Launching PTY session (%s)..."), ccmd))
+		fmt.Println(au.Sprintf(au.Bold("Launching PTY session (%s)..."), shellPath))
 
-		pcmd := exec.Command(ccmd)
+		pcmd := exec.Command(shellPath)
 		ptmx, err := pty.Start(pcmd)
 		if err != nil {
 			return Error(err)
@@ -202,5 +202,6 @@ var recordCmd = &cobra.Command{
 }
 
 func init() {
+	recordCmd.Flags().StringVar(&Shell, "shell", shell(), "shell to use")
 	root.AddCommand(recordCmd)
 }

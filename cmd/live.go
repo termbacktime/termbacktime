@@ -46,6 +46,7 @@ var liveCmd = &cobra.Command{
 	Use:   "live",
 	Short: "Live share your terminal via WebRTC to browser",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		shellPath := shell(); // Detect shell
 		defer spinner.Stop()
 		stopTicker := make(chan bool, 1)
 		interrupt := make(chan os.Signal, 1)
@@ -181,7 +182,7 @@ var liveCmd = &cobra.Command{
 		dataChannel.OnOpen(func() {
 			if streaming == false {
 				GetLogger().Write("[Data] Remote peer connected!")
-				startpty()
+				startpty(shellPath)
 			}
 		})
 		dataChannel.OnError(func(err error) {
@@ -267,16 +268,13 @@ var liveCmd = &cobra.Command{
 	},
 }
 
-func startpty() {
+func startpty(shellPath string) {
 	streaming = true
 
-	// Get shell command
-	ccmd := shell()
-
 	// Start PTY.
-	fmt.Println(au.Sprintf(au.Bold("Launching PTY session (%s)..."), ccmd))
+	fmt.Println(au.Sprintf(au.Bold("Launching PTY session (%s)..."), shellPath))
 
-	pcmd := exec.Command(ccmd)
+	pcmd := exec.Command(shellPath)
 	ptmx, err := pty.Start(pcmd)
 	if err != nil {
 		fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
@@ -405,5 +403,6 @@ func init() {
 	liveCmd.Flags().StringP("pass", "p", "", "TURN server password")
 	liveCmd.Flags().StringP("addr", "a", "", "TURN server address with optional port (<server>[:<port>])")
 	liveCmd.Flags().BoolP("no-turn", "n", false, fmt.Sprintf("do NOT use the offical %s TURN servers", Application))
+	liveCmd.Flags().StringVar(&Shell, "shell", shell(), "shell to use")
 	root.AddCommand(liveCmd)
 }

@@ -52,6 +52,7 @@ var (
 	versionTemplate = fmt.Sprintf("%s - %s/ - version=%s revision=%s (%s)\r\n",
 		Application, PlaybackURL, Version, Revision, runtime.Version())
 	cfgFile      string
+	Shell        string
 	Closed       bool
 	GistResponse map[string]interface{}
 	GithubToken  string
