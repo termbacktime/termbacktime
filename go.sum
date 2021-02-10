@@ -218,6 +218,7 @@ github.com/pion/webrtc/v3 v3.0.3 h1:nAXJ5niRFRRMneuhM56xsh3J76sv+HAHCNuBmab3YR0=
 github.com/pion/webrtc/v3 v3.0.3/go.mod h1:DZonLDfkjMlsY/IGixAbcq8izHu0zJIk04DYx51KUvk=
 github.com/pion/webrtc/v3 v3.0.4 h1:Tiw3H9fpfcwkvaxonB+Gv1DG9tmgYBQaM1vBagDHP40=
 github.com/pion/webrtc/v3 v3.0.4/go.mod h1:1TmFSLpPYFTFXFHPtoq9eGP1ASTa9LC6FBh7sUY8cd4=
+github.com/pion/webrtc/v3 v3.0.6/go.mod h1:/EDCREM8y+JrJSkoCRHpoz//qtuBCOYV4E96vEK3bz0=
 github.com/pkg/browser v0.0.0-20201207095918-0426ae3fba23 h1:dofHuld+js7eKSemxqTVIo8yRlpRw+H1SdpzZxWruBc=
 github.com/pkg/browser v0.0.0-20201207095918-0426ae3fba23/go.mod h1:N6UoU20jOqggOuDwUaBQpluzLNDqif3kq9z2wpdYEfQ=
 github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 h1:Qj1ukM4GlMWXNdMBuXcXfz/Kw9s1qm0CLY32QxuSImI=
