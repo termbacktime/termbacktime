@@ -13,7 +13,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pion/ice/v2 v2.0.15 // indirect
-	github.com/pion/webrtc/v3 v3.0.4
+	github.com/pion/webrtc/v3 v3.0.8
 	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4
 	github.com/spf13/afero v1.5.1 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
