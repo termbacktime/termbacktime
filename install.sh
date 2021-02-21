@@ -10,18 +10,28 @@
 set -e
 
 DLINK="https://golang.org/dl"
+REPO="https://github.com/termbacktime/termbacktime.git"
 
 function installtbt () {
-	echo "Fetching termbacktime..."
-	echo ""
-	cd ; go get -u -v louist.dev/termbacktime &
-	wait < <(jobs -p)
-	cd "$GOPATH/src/louist.dev/termbacktime"
-	echo ""
-	echo "Running make install..."
-	make install-upx
-	echo ""
-	termbacktime --version
+  if git rev-parse --git-dir > /dev/null 2>&1; then
+    if make is-termbacktime-repo > /dev/null 2>&1; then
+      echo "Updating $REPO..."
+      git checkout master && git pull
+      echo ""
+      echo "Running: make install-upx..."
+      make install-upx
+      echo ""
+      termbacktime --version
+      exit 0
+    fi
+  fi
+  temp_dir="$(mktemp -d)"
+  echo "Cloning $REPO to $temp_dir..."
+  git clone -q "${REPO}" "${temp_dir}"
+  echo "Running: make install-upx..."
+  cd "${temp_dir}/" && make install-upx
+  echo ""
+  termbacktime --version
 }
 
 if [ -n "`$SHELL -c 'echo $ZSH_VERSION'`" ]; then
@@ -58,9 +68,9 @@ if [ -x "$(command -v go)" ]; then
 	fi;
 	if [ -x "$(command -v termbacktime)" ]; then
 		echo "termbacktime found: $(termbacktime --version)"
-		echo "Updating $GOPATH/src/louist.dev/termbacktime in 5 seconds..."
+		echo "Updating in 5 seconds..."
 	else
-		echo "Installing termbacktime to $GOPATH in 5 seconds..."
+		echo "Installing in 5 seconds..."
 	fi;
 	sleep 5
 	echo ""
