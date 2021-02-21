@@ -13,6 +13,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
 	github.com/pion/ice/v2 v2.0.15 // indirect
+	github.com/pion/interceptor v0.0.10 // indirect
 	github.com/pion/webrtc/v3 v3.0.11
 	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4
 	github.com/spf13/afero v1.5.1 // indirect
@@ -20,11 +21,11 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.7.1
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
+	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
 	golang.org/x/mod v0.4.1
-	golang.org/x/net v0.0.0-20210119194325-5f4716e94777 // indirect
-	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
-	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
+	golang.org/x/net v0.0.0-20210220033124-5f55cee0dc0d // indirect
+	golang.org/x/sys v0.0.0-20210220050731-9a76102bfb43 // indirect
+	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	golang.org/x/text v0.3.5
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
