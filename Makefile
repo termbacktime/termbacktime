@@ -71,12 +71,12 @@ build-crosscompile-dev: initial
 	GOOS=freebsd GOARCH=386 go build -o ./builds/$(BINARY_FREEBSD)-386-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 
 install: initial
-	go install -i -ldflags "${LDFLAGS}"
+	go install -ldflags "${LDFLAGS}"
 
 install-upx: initial install upx-installed
 
 install-dev: initial
-	go build -i -o $(GOPATH)/bin/$(APP_NAME)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
+	go build -o $(GOPATH)/bin/$(APP_NAME)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 
 install-dev-upx: initial install-dev upx-installed
 
@@ -91,18 +91,25 @@ endif
 
 upx-check:
 ifndef UPX
-	$(error "upx is not installed; please see https://upx.github.io/ for more information")
+	@echo ""
+	@echo "upx is not installed; please see https://upx.github.io/ for more information"
 endif
 
 upx: upx-check
+ifdef UPX
 	upx -5 ./builds/*
+endif
 
 upx-installed: upx-check
+ifdef UPX
 	upx -5 $(GOPATH)/bin/$(APP_NAME)*
+endif
 
 # upx does not support freebsd
 upx-crosscompile: upx-check
+ifdef UPX
 	upx -5 ./builds/$(BINARY_DARWIN)* ./builds/$(BINARY_UNIX)*
+endif
 
 initial:
 	go clean
@@ -117,3 +124,6 @@ run-dev:
 
 update-pkg-cache:
 	cd .. && GOPROXY=https://proxy.golang.org GO111MODULE=on go get ${GITURL}@$(VERSION)
+
+is-termbacktime-repo:
+	@exit 0
