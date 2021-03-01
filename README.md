@@ -1,4 +1,4 @@
-# [TermBackTime]
+# [TermBackTime] - [![Go Report Card](https://goreportcard.com/badge/louist.dev/termbacktime)](https://goreportcard.com/report/louist.dev/termbacktime)
 Terminal recording and playback, written in [Go]. All terminal recordings are currently saved as secret [Gist] postings.
 
 ### Playback Example

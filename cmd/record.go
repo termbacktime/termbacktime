@@ -114,9 +114,7 @@ var recordCmd = &cobra.Command{
 			for {
 				nr, err := os.Stdin.Read(bufin)
 				if err != nil {
-					if err == io.EOF {
-						err = nil
-					} else {
+					if err != io.EOF {
 						log.Println(err)
 					}
 					break

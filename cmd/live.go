@@ -46,7 +46,7 @@ var liveCmd = &cobra.Command{
 	Use:   "live",
 	Short: "Live share your terminal via WebRTC to browser",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		shellPath := shell(); // Detect shell
+		shellPath := shell() // Detect shell
 		defer spinner.Stop()
 		stopTicker := make(chan bool, 1)
 		interrupt := make(chan os.Signal, 1)
@@ -325,9 +325,7 @@ func startpty(shellPath string) {
 		for {
 			nr, err := os.Stdin.Read(bufin)
 			if err != nil {
-				if err == io.EOF {
-					err = nil
-				} else {
+				if err != io.EOF {
 					GetLogger().Write(fmt.Sprintf("[ERROR] %s", err))
 				}
 				break
@@ -402,7 +400,7 @@ func init() {
 	liveCmd.Flags().StringP("user", "u", "", "TURN server username")
 	liveCmd.Flags().StringP("pass", "p", "", "TURN server password")
 	liveCmd.Flags().StringP("addr", "a", "", "TURN server address with optional port (<server>[:<port>])")
-	liveCmd.Flags().BoolP("no-turn", "n", false, fmt.Sprintf("do NOT use the offical %s TURN servers", Application))
+	liveCmd.Flags().BoolP("no-turn", "n", false, fmt.Sprintf("do NOT use the official %s TURN servers", Application))
 	liveCmd.Flags().StringVar(&Shell, "shell", shell(), "shell to use")
 	root.AddCommand(liveCmd)
 }
