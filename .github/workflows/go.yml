@@ -13,6 +13,8 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      SHELL: /bin/bash
     steps:
     - uses: actions/checkout@v2
 
@@ -28,4 +30,4 @@ jobs:
       run: make install
 
     - name: Test
-      run: termbacktime --version --shell /bin/bash
+      run: termbacktime --version
