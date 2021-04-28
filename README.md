@@ -1,10 +1,11 @@
-# [TermBackTime] - [![Go Report Card](https://goreportcard.com/badge/louist.dev/termbacktime)](https://goreportcard.com/report/louist.dev/termbacktime)
+# [TermBackTime]
+[![Go Report Card](https://goreportcard.com/badge/louist.dev/termbacktime)](https://goreportcard.com/report/louist.dev/termbacktime)
+[![Discord](https://discordapp.com/api/guilds/642536642590277642/widget.png?style=shield)](https://discord.gg/b8FJ5ca4Nj)
+
 Terminal recording and playback, written in [Go]. All terminal recordings are currently saved as secret [Gist] postings.
 
 ### Playback Example
-![TermBackTime - Playback](https://i.imgur.com/RtLL8e2.gif)
-
-[https://termbackti.me/p/1fc1b6cd6317180d01f60b3011490e75](https://termbackti.me/p/1fc1b6cd6317180d01f60b3011490e75)
+[![TermBackTime - Playback](https://i.imgur.com/RtLL8e2.gif)](https://termbackti.me/p/1fc1b6cd6317180d01f60b3011490e75)
 
 ## Install / Update
 > Note: If [Go] is already installed, will use the currently installed version to install `termbacktime`.
