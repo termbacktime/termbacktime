@@ -57,6 +57,8 @@ build-crosscompile: initial
 	GOOS=linux GOARCH=arm64 go build -o ./builds/$(BINARY_UNIX)-arm64 -v -ldflags "${LDFLAGS}"
 	GOOS=linux GOARCH=arm GOARM=7 go build -o ./builds/$(BINARY_UNIX)-armv7 -v -ldflags "${LDFLAGS}"
 	GOOS=linux GOARCH=arm GOARM=6 go build -o ./builds/$(BINARY_UNIX)-armv6 -v -ldflags "${LDFLAGS}"
+
+build-freebsd: initial
 	GOOS=freebsd GOARCH=amd64 go build -o ./builds/$(BINARY_FREEBSD) -v -ldflags "${LDFLAGS}"
 	GOOS=freebsd GOARCH=386 go build -o ./builds/$(BINARY_FREEBSD)-386 -v -ldflags "${LDFLAGS}"
 
