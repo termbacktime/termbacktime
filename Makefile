@@ -69,6 +69,8 @@ build-crosscompile-dev: initial
 	GOOS=linux GOARCH=arm64 go build -o ./builds/$(BINARY_UNIX)-arm64-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=arm GOARM=7 go build -o ./builds/$(BINARY_UNIX)-armv7-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=arm GOARM=6 go build -o ./builds/$(BINARY_UNIX)-armv6-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
+
+build-freebsd-dev: initial
 	GOOS=freebsd GOARCH=amd64 go build -o ./builds/$(BINARY_FREEBSD)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=freebsd GOARCH=386 go build -o ./builds/$(BINARY_FREEBSD)-386-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 
@@ -119,10 +121,10 @@ initial:
 	go vet ./...
 
 run:
-	go run -v -ldflags "${LDFLAGS}" ./main.go
+	go run -v -ldflags "${LDFLAGS}" ./main.go $(cmd)
 
 run-dev:
-	go run -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}" ./main.go
+	go run -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}" ./main.go $(cmd)
 
 update-pkg-cache:
 	cd .. && GOPROXY=https://proxy.golang.org GO111MODULE=on go get ${GITURL}@$(VERSION)
