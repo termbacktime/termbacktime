@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/caarlos0/spin v1.1.0
-	github.com/creack/pty v1.1.12
+	github.com/creack/pty v1.1.13
 	github.com/gorilla/websocket v1.4.2
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
