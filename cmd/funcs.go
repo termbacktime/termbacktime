@@ -105,7 +105,7 @@ func uncompress(data string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(resB.Bytes()), nil
+	return resB.String(), nil
 }
 
 // getHome returns the users home directory path.
@@ -214,7 +214,7 @@ func (r *Recording) setTerminalDimensions(init bool) {
 	if Width, Height, err := terminal.GetSize(int(os.Stdout.Fd())); err != nil {
 		log.Println(err)
 	} else {
-		if init == true {
+		if init {
 			r.Sizes = []int{Width, Height}
 		} else {
 			Instructions = append(Instructions, Lines{
