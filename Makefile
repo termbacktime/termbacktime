@@ -52,6 +52,7 @@ build-dev: initial
 
 build-crosscompile: initial
 	GOOS=darwin GOARCH=amd64 go build -o ./builds/$(BINARY_DARWIN) -v -ldflags "${LDFLAGS}"
+	GOOS=darwin GOARCH=arm64 go build -o ./builds/$(BINARY_DARWIN)-arm64 -v -ldflags "${LDFLAGS}"
 	GOOS=linux GOARCH=amd64 go build -o ./builds/$(BINARY_UNIX) -v -ldflags "${LDFLAGS}"
 	GOOS=linux GOARCH=386 go build -o ./builds/$(BINARY_UNIX)-386 -v -ldflags "${LDFLAGS}"
 	GOOS=linux GOARCH=arm64 go build -o ./builds/$(BINARY_UNIX)-arm64 -v -ldflags "${LDFLAGS}"
