@@ -169,7 +169,7 @@ var recordCmd = &cobra.Command{
 
 		// Confirm upload to Gist.
 		_ = terminal.Restore(int(os.Stdin.Fd()), oldState)
-		fmt.Printf(au.Sprintf(au.Bold("\r\nSave to Gist? [y/n]: ")))
+		fmt.Println(au.Sprintf(au.Bold("\r\nSave to Gist? [y/n]: ")))
 		yes := regexp.MustCompile(`^y(es)?$`)
 		no := regexp.MustCompile(`^no?$`)
 
@@ -187,7 +187,7 @@ var recordCmd = &cobra.Command{
 						fmt.Println(au.Sprintf(au.Bold("Canceled!")))
 						break stdinloop
 					} else {
-						fmt.Printf(au.Sprintf(au.Bold("\r\nSave to Gist? [y/n]: ")))
+						fmt.Println(au.Sprintf(au.Bold("\r\nSave to Gist? [y/n]: ")))
 					}
 				}
 			case <-time.After(60 * time.Second):

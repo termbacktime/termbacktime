@@ -129,9 +129,9 @@ var liveCmd = &cobra.Command{
 		spinner.Start()
 
 		chn := fmt.Sprintf("tbt:%s", uuid())
-		client, resp, err := websocket.DefaultDialer.Dial(fmt.Sprintf("%s/live?token=%s", Broker, chn), nil)
+		client, resp, err := wsDialer.Dial(fmt.Sprintf("%s/live/host?token=%s", Broker, chn), nil)
 		if err != nil {
-			fmt.Println(au.Sprintf(au.Red("\nError: %v (status code: %s)\n"), err, resp.StatusCode))
+			fmt.Println(au.Sprintf(au.Red("\nError: %v (status code: %d)\n"), err, resp.StatusCode))
 			os.Exit(1)
 		}
 		defer client.Close()
@@ -180,7 +180,7 @@ var liveCmd = &cobra.Command{
 		}
 
 		dataChannel.OnOpen(func() {
-			if streaming == false {
+			if !streaming {
 				GetLogger().Write("[Data] Remote peer connected!")
 				startpty(shellPath)
 			}
@@ -221,14 +221,14 @@ var liveCmd = &cobra.Command{
 
 		done := make(chan bool, 1)
 		go func() {
+			defer close(done)
 			for {
-				defer close(done)
-				var l LiveResponse
-				if err := client.ReadJSON(&l); err != nil {
+				var line LiveResponse
+				if err := client.ReadJSON(&line); err != nil {
 					fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
-					return
+					os.Exit(1)
 				}
-				if l.Connected {
+				if line.Connected {
 					stopTicker <- true
 					packet := &LiveOffer{Offer: encoded}
 					if len(tserver.URLs) > 0 {
@@ -242,9 +242,9 @@ var liveCmd = &cobra.Command{
 						fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
 						os.Exit(1)
 					}
-				} else if len(l.Answer) > 0 {
+				} else if len(line.Answer) > 0 {
 					answer := webrtc.SessionDescription{}
-					DecodeAnswer(l.Answer, &answer)
+					DecodeAnswer(line.Answer, &answer)
 					if err := peerConnection.SetRemoteDescription(answer); err != nil {
 						fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
 						os.Exit(1)
@@ -253,15 +253,12 @@ var liveCmd = &cobra.Command{
 				}
 			}
 		}()
-
 		for {
 			select {
 			case <-done:
 			case <-interrupt:
 				client.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-				select {
-				case <-time.After(time.Second):
-				}
+				time.Sleep(1 * time.Second)
 				return nil
 			}
 		}

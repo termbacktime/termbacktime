@@ -26,6 +26,7 @@ import (
 	"runtime"
 
 	"github.com/caarlos0/spin"
+	"github.com/gorilla/websocket"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -69,11 +70,15 @@ var (
 			{URLs: []string{STUNServerTwo}},
 		},
 	}
-	turnCredentials map[string]interface{}
 	tserver         = webrtc.ICEServer{}
 	turnMatch       = regexp.MustCompile(`^(?:([^:]+)?(?::([^@]+))?@)?((?:[^:]+)(?::\d+)?)$`)
 	streaming       = false
 	connected       = false
 	dataChannel     *webrtc.DataChannel
 	peerConnection  *webrtc.PeerConnection
+	wsBufferSize    = 1024 * 10
+	wsDialer        = websocket.Dialer{
+		ReadBufferSize:  wsBufferSize,
+		WriteBufferSize: wsBufferSize,
+	}
 )
