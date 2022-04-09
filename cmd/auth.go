@@ -44,7 +44,7 @@ var authCmd = &cobra.Command{
 			signal.Notify(interrupt, os.Interrupt)
 
 			chn := fmt.Sprintf("tbt:%s", uuid())
-			client, resp, err := websocket.DefaultDialer.Dial(fmt.Sprintf("%s/auth?token=%s", Broker, chn), nil)
+			client, resp, err := wsDialer.Dial(fmt.Sprintf("%s/live?token=%s", Broker, chn), nil)
 			if err != nil {
 				fmt.Println(au.Sprintf(au.Red("\nError: %v (status code: %d)\n"), err, resp.StatusCode))
 				os.Exit(1)
@@ -52,14 +52,16 @@ var authCmd = &cobra.Command{
 			defer client.Close()
 
 			AuthURL := fmt.Sprintf("%s/auth/#%s", PlaybackURL, chn)
-			if err := browser.OpenURL(AuthURL); err != nil {
-				fmt.Printf("Please authorize %s with GitHub: %s\r\n", Application, AuthURL)
+			open, _ := cmd.Flags().GetBool("open")
+			if open {
+				browser.OpenURL(AuthURL)
 			}
+			fmt.Println(au.Sprintf(au.Bold("Please authorize %s with GitHub: %s\r"), Application, AuthURL))
 
 			go func() {
 				ticker := time.Tick(time.Second)
-				fmt.Print(colorify("Waiting for token; timeout in %d seconds...", 60))
-				for i := 59; i >= 0; i-- {
+				fmt.Print(colorify("Waiting for token; timeout in %d seconds...", 120))
+				for i := 119; i >= 0; i-- {
 					<-ticker
 					fmt.Printf("\r%s", colorify("Waiting for token; timeout in %d seconds...", i))
 				}
@@ -68,17 +70,16 @@ var authCmd = &cobra.Command{
 			}()
 
 			done := make(chan struct{})
-
 			go func() {
+				defer close(done)
 				for {
-					defer close(done)
 					var r map[string]interface{}
 					if err := client.ReadJSON(&r); err != nil {
 						fmt.Println(au.Sprintf(au.Red("\nError: %v\n"), err))
 						return
 					}
 					if r["token"] != nil && len(r["token"].(string)) > 0 {
-						fmt.Printf("\rLogged in as %s (%s)\r\n", r["login"], r["token"])
+						fmt.Printf("\r\nLogged in as %s\r\n", r["login"].(string))
 						saveToken(r, false)
 					}
 				}
@@ -87,13 +88,9 @@ var authCmd = &cobra.Command{
 			for {
 				select {
 				case <-done:
-					return
 				case <-interrupt:
 					client.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-					select {
-					case <-done:
-					case <-time.After(time.Second):
-					}
+					time.Sleep(1 * time.Second)
 					return
 				}
 			}
@@ -103,5 +100,6 @@ var authCmd = &cobra.Command{
 
 func init() {
 	authCmd.Flags().StringP("set-token", "s", "", "manually set a GitHub auth token")
+	authCmd.Flags().BoolP("open", "o", false, "open the GitHub auth URL in your browser")
 	root.AddCommand(authCmd)
 }

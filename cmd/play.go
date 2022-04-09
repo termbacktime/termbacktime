@@ -45,7 +45,7 @@ var playCmd = &cobra.Command{
 		defer spinner.Stop()
 
 		match, _ := regexp.MatchString("^[a-fA-F0-9]{32}$", args[0])
-		if match == false {
+		if !match {
 			return Error(fmt.Errorf("%s is not a valid Gist hash", args[0]))
 		}
 

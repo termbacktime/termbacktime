@@ -29,7 +29,7 @@ type Recording struct {
 	Title   string  `json:"t,omitempty"`
 	Sizes   []int   `json:"s,omitempty"`
 	Lines   []Lines `json:"r,omitempty"`
-	Pack    string  `json:"p,omitemptu"`
+	Pack    string  `json:"p,omitempty"`
 }
 
 // Lines is an array of terminal STDOUT lines.
