@@ -9,8 +9,7 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/pion/ice/v2 v2.2.3 // indirect
-	github.com/pion/webrtc/v3 v3.1.27
+	github.com/pion/webrtc/v3 v3.1.32
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cobra v1.4.0
