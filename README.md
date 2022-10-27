@@ -1,6 +1,6 @@
 # [TermBackTime]
 [![Go Report Card](https://goreportcard.com/badge/louist.dev/termbacktime)](https://goreportcard.com/report/louist.dev/termbacktime)
-[![Discord](https://discordapp.com/api/guilds/642536642590277642/widget.png?style=shield)](https://discord.gg/b8FJ5ca4Nj)
+[![Discord](https://discordapp.com/api/guilds/426492725664153611/widget.png?style=shield)](https://discord.gg/vGaGZWDTsw)
 
 Terminal recording and playback, written in [Go]. All terminal recordings are currently saved as secret [Gist] postings.
 
@@ -21,7 +21,7 @@ To install a different version of [Go]:
  ./install.sh <version>
 ```
 
-For example, `1.14.12` would be `./install.sh 1.14.12`
+For example, `1.19.0` would be `./install.sh 1.19.0`
 
 If you already have [Go] installed, you can manually install:
 ```shell

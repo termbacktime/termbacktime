@@ -23,7 +23,6 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"sync"
@@ -62,7 +61,7 @@ func (l *Logger) Write(str string) *Logger {
 
 // Dump logger content
 func (l *Logger) Dump() *Logger {
-	if content, err := ioutil.ReadFile(l.file.Name()); err == nil {
+	if content, err := os.ReadFile(l.file.Name()); err == nil {
 		fmt.Println(string(content))
 	}
 	return l
@@ -80,7 +79,7 @@ func GetLogger(prefix ...string) *Logger {
 		if len(prefix) > 0 {
 			pre = prefix[0]
 		}
-		file, err := ioutil.TempFile("", fmt.Sprintf("%s-*.log", pre))
+		file, err := os.CreateTemp("", fmt.Sprintf("%s-*.log", pre))
 		if err == nil {
 			logger = &Logger{
 				file:   file,

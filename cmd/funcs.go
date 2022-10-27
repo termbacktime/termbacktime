@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Louis Tarango - me@lou.ist
+// Copyright (c) 2019-2022 Louis T. - contact@lou.ist
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/bits"
 	"net/http"
@@ -129,7 +128,7 @@ func VersionCheck(current string) (string, bool) {
 	}
 	if res, err := client.Get(fmt.Sprintf("%s/_version", PlaybackURL)); err == nil {
 		defer res.Body.Close()
-		if version, err := ioutil.ReadAll(res.Body); err == nil {
+		if version, err := io.ReadAll(res.Body); err == nil {
 			ver := string(version)
 			if semver.Compare(current, ver) == -1 {
 				return ver, true
