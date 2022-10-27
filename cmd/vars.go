@@ -1,4 +1,4 @@
-// Copyright (c) 2019 Louis Tarango - me@lou.ist
+// Copyright (c) 2019-2022 Louis T. - contact@lou.ist
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -70,14 +70,14 @@ var (
 			{URLs: []string{STUNServerTwo}},
 		},
 	}
-	tserver         = webrtc.ICEServer{}
-	turnMatch       = regexp.MustCompile(`^(?:([^:]+)?(?::([^@]+))?@)?((?:[^:]+)(?::\d+)?)$`)
-	streaming       = false
-	connected       = false
-	dataChannel     *webrtc.DataChannel
-	peerConnection  *webrtc.PeerConnection
-	wsBufferSize    = 1024 * 10
-	wsDialer        = websocket.Dialer{
+	tserver        = webrtc.ICEServer{}
+	turnMatch      = regexp.MustCompile(`^(?:([^:]+)?(?::([^@]+))?@)?((?:[^:]+)(?::\d+)?)$`)
+	streaming      = false
+	connected      = false
+	dataChannel    *webrtc.DataChannel
+	peerConnection *webrtc.PeerConnection
+	wsBufferSize   = 1024 * 10
+	wsDialer       = websocket.Dialer{
 		ReadBufferSize:  wsBufferSize,
 		WriteBufferSize: wsBufferSize,
 	}

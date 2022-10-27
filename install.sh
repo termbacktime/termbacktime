@@ -5,7 +5,7 @@
 #  ./install.sh <optional go version>
 #
 #  Linux + WSL:  i386, x86-64, ARMv6, ARMv8
-#  Darwin: i386, x86-64
+#  Darwin: i386, x86-64, ARM64
 #
 set -e
 
