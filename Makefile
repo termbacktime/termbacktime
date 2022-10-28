@@ -65,6 +65,7 @@ build-freebsd: initial
 
 build-crosscompile-dev: initial
 	GOOS=darwin GOARCH=amd64 go build -o ./builds/$(BINARY_DARWIN)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
+	GOOS=darwin GOARCH=arm64 go build -o ./builds/$(BINARY_DARWIN)-arm64-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=amd64 go build -o ./builds/$(BINARY_UNIX)-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=386 go build -o ./builds/$(BINARY_UNIX)-386-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
 	GOOS=linux GOARCH=arm64 go build -o ./builds/$(BINARY_UNIX)-arm64-dev -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}"
@@ -128,7 +129,7 @@ run-dev:
 	go run -v -ldflags "${LDFLAGS} ${DEVLDFLAGS}" ./main.go $(cmd)
 
 update-pkg-cache:
-	cd .. && GOPROXY=https://proxy.golang.org GO111MODULE=on go get ${GITURL}@$(VERSION)
+	cd .. && GOPROXY=https://proxy.golang.org GO111MODULE=on go install ${GITURL}@$(VERSION)
 
 is-termbacktime-repo:
 	@exit 0
