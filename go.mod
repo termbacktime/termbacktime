@@ -11,7 +11,7 @@ require (
 	github.com/pion/webrtc/v3 v3.1.47
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/spf13/cobra v1.6.1
-	github.com/spf13/viper v1.13.0
+	github.com/spf13/viper v1.14.0
 	golang.org/x/mod v0.6.0
 	golang.org/x/term v0.1.0
 	golang.org/x/text v0.4.0
