@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/pion/webrtc/v3 v3.1.47
+	github.com/pion/webrtc/v3 v3.1.48
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.13.0
