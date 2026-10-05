@@ -29,9 +29,10 @@ outputs:
 runs:
     using: composite
     steps:
-        - uses: actions/setup-go@v7.0.0
+        - uses: actions/setup-go@v7
           with:
               go-version-file: ${{ github.action_path }}/go.mod
+              cache-dependency-path: ${{ github.action_path }}/go.sum
         - id: record
           shell: bash
           env:
@@ -42,7 +43,7 @@ runs:
           run: bash "$TBT_ACTION_PATH/scripts/ci-record.sh"
         - id: artifact
           if: steps.record.outputs.exit-code != '0'
-          uses: actions/upload-artifact@v7.0.1
+          uses: actions/upload-artifact@v7
           with:
               name: ${{ inputs.artifact-name }}
               path: ${{ steps.record.outputs.artifacts }}

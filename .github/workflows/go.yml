@@ -13,17 +13,18 @@ jobs:
                 os: [ubuntu-latest, macos-latest]
         runs-on: ${{ matrix.os }}
         steps:
-            - uses: actions/checkout@v7.0.1
-            - uses: actions/setup-go@v7.0.0
+            - uses: actions/checkout@v7
+            - uses: actions/setup-go@v7
               with:
                   go-version-file: go.mod
+                  cache-dependency-path: go.sum
             - run: make test
             - run: make check
             - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
     shell:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v7.0.1
+            - uses: actions/checkout@v7
             - run: sudo apt-get update && sudo apt-get install -y shellcheck shfmt
             - run: shellcheck install.sh
             - run: shfmt -ln posix -i 2 -ci -sr -d install.sh

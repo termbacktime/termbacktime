@@ -100,6 +100,7 @@ detect_platform() {
 
   case "$platform-$arch" in
     darwin-amd64 | darwin-arm64 | linux-amd64 | linux-386 | linux-arm64 | linux-armv6 | linux-armv7 | freebsd-amd64 | freebsd-386)
+      :
       ;;
     *)
       fail "No binary for $platform-$arch. Try: go install github.com/termbacktime/termbacktime@latest"
