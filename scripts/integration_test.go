@@ -5,6 +5,7 @@ package scripts
 import (
 	"archive/zip"
 	"bytes"
+	"debug/buildinfo"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -118,8 +119,24 @@ func TestTaggedAndCheckoutGoInstall(t *testing.T) {
 	}
 	runTool(t, root, env, "go", "install", ".")
 	checkoutVersion := runTool(t, temporary, env, binary, "--version")
-	if !strings.HasPrefix(checkoutVersion, "termbacktime dev revision=") {
-		t.Fatal(checkoutVersion)
+	info, err := buildinfo.ReadFile(binary)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Go stamps checkout builds with a VCS tag or pseudo-version when
+	// available. Only builds without that metadata fall back to dev.
+	wantVersion, wantRevision := info.Main.Version, "unknown"
+	if wantVersion == "" || wantVersion == "(devel)" {
+		wantVersion = "dev"
+	}
+	for _, setting := range info.Settings {
+		if setting.Key == "vcs.revision" {
+			wantRevision = setting.Value
+		}
+	}
+	want := fmt.Sprintf("termbacktime %s revision=%s (%s)\n", wantVersion, wantRevision, info.GoVersion)
+	if checkoutVersion != want {
+		t.Fatalf("checkout version = %q, want %q", checkoutVersion, want)
 	}
 }
 

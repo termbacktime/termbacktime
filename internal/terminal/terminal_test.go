@@ -69,6 +69,10 @@ func TestPTYLoginProfileAndExplicitCommandStartup(t *testing.T) {
 			if err := os.WriteFile(filepath.Join(home, ".bash_profile"), []byte(profile), 0600); err != nil {
 				t.Fatal(err)
 			}
+			// System bashrc files can replace an inherited PS1 on Linux.
+			if err := os.WriteFile(filepath.Join(home, ".bashrc"), []byte("export PS1='TBT READY> '\n"), 0600); err != nil {
+				t.Fatal(err)
+			}
 			input, send, err := os.Pipe()
 			if err != nil {
 				t.Fatal(err)
@@ -81,12 +85,13 @@ func TestPTYLoginProfileAndExplicitCommandStartup(t *testing.T) {
 			}
 			defer output.Close()
 			ctx, cancel := context.WithTimeout(t.Context(), 8*time.Second)
-			defer cancel()
 			var text strings.Builder
 			var readyOnce sync.Once
 			ready := make(chan struct{})
 			done := make(chan error, 1)
+			stopped := make(chan struct{})
 			go func() {
+				defer close(stopped)
 				done <- Run(ctx, Options{Shell: "/bin/bash", Args: test.args, Input: input, Output: output, OnEvent: func(e Event) error {
 					text.WriteString(e.Text)
 					if strings.Contains(text.String(), "TBT READY> ") {
@@ -94,6 +99,10 @@ func TestPTYLoginProfileAndExplicitCommandStartup(t *testing.T) {
 					}
 					return nil
 				}})
+			}()
+			defer func() {
+				cancel()
+				<-stopped // Finish the pumps before closing their input/output files.
 			}()
 			if len(test.args) == 0 {
 				select {

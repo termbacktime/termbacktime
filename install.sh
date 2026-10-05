@@ -202,7 +202,9 @@ verify_release() {
     *) fail 'Archive binary must be a regular file' ;;
   esac
   tar -xzf "$work/release.tar.gz" -C "$work" termbacktime
-  [ -f "$work/termbacktime" ] && [ ! -L "$work/termbacktime" ] || fail 'Invalid binary'
+  if [ ! -f "$work/termbacktime" ] || [ -L "$work/termbacktime" ]; then
+    fail 'Invalid binary'
+  fi
   chmod 755 "$work/termbacktime"
   reported=$("$work/termbacktime" --version) || fail 'Downloaded binary cannot run on this system'
   case "$reported" in
