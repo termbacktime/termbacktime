@@ -1,0 +1,33 @@
+name: Release CLI
+on:
+    push:
+        tags: ['v1.*']
+permissions:
+    contents: write
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7.0.1
+              with:
+                  fetch-depth: 0
+            - uses: actions/setup-go@v7.0.0
+              with:
+                  go-version: '1.27.1'
+            - run: go test -race ./...
+            - run: go vet ./...
+            - name: Build all release targets
+              env:
+                  SITE_URL: ${{ vars.SITE_URL }}
+              run: go run ./scripts/release "$GITHUB_REF_NAME"
+            - name: Publish immutable artifacts
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  case "$GITHUB_REF_NAME" in
+                    *-*) prerelease=--prerelease ;;
+                    *) prerelease= ;;
+                  esac
+                  gh release create "$GITHUB_REF_NAME" builds/"$GITHUB_REF_NAME"/* --verify-tag --generate-notes $prerelease
+            - name: Smoke test published module
+              run: go install "github.com/termbacktime/termbacktime@$GITHUB_REF_NAME"

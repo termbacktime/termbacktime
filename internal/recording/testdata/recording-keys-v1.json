@@ -1,0 +1,168 @@
+{
+    "compact": {
+        "u": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "t": "Compact 世界",
+        "d": 1790000000,
+        "s": [80, 24],
+        "i": {
+            "a": "arm64",
+            "o": "darwin",
+            "v": "go1.27.1",
+            "c": "v1.2.3",
+            "u": "v1.2.4"
+        },
+        "m": {
+            "v": 1,
+            "d": "A walkthrough",
+            "c": {
+                "t": 1790000000,
+                "o": "darwin",
+                "v": "26",
+                "a": "arm64",
+                "c": "Example CPU",
+                "p": 8,
+                "l": 16,
+                "r": 34359738368,
+                "d": 1099511627776
+            },
+            "u": {
+                "t": 1790000100,
+                "o": "linux",
+                "v": "6.8",
+                "a": "amd64",
+                "c": "Upload CPU",
+                "p": 4,
+                "l": 8,
+                "r": 17179869184,
+                "d": 549755813888
+            }
+        },
+        "a": [
+            {
+                "i": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "a": 10,
+                "l": "Build",
+                "n": "Look here",
+                "k": "chapter"
+            }
+        ],
+        "c": [
+            {
+                "i": "cccccccccccccccccccccccccccccccc",
+                "a": 20,
+                "t": "A callout",
+                "d": 5000,
+                "p": true
+            }
+        ],
+        "r": [
+            {
+                "t": 10,
+                "l": ["\u001b[32mhello 世界\u001b[0m\r\n"],
+                "e": {
+                    "i": "dddddddddddddddddddddddddddddddd",
+                    "p": "start",
+                    "t": "echo hello",
+                    "r": true
+                }
+            },
+            {
+                "t": 20,
+                "c": "s",
+                "s": [100, 30]
+            },
+            {
+                "t": 5,
+                "l": ["done\r\n"],
+                "e": {
+                    "i": "dddddddddddddddddddddddddddddddd",
+                    "p": "end",
+                    "e": 0
+                }
+            }
+        ]
+    },
+    "readable": {
+        "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "title": "Compact 世界",
+        "started_at": 1790000000,
+        "size": [80, 24],
+        "info": {
+            "arch": "arm64",
+            "os": "darwin",
+            "go": "go1.27.1",
+            "cli": "v1.2.3",
+            "upload_cli": "v1.2.4"
+        },
+        "metadata": {
+            "version": 1,
+            "description": "A walkthrough",
+            "capture_system": {
+                "observed_at": 1790000000,
+                "os": "darwin",
+                "os_version": "26",
+                "arch": "arm64",
+                "cpu_model": "Example CPU",
+                "physical_cores": 8,
+                "logical_cores": 16,
+                "ram_bytes": 34359738368,
+                "disk_total_bytes": 1099511627776
+            },
+            "upload_system": {
+                "observed_at": 1790000100,
+                "os": "linux",
+                "os_version": "6.8",
+                "arch": "amd64",
+                "cpu_model": "Upload CPU",
+                "physical_cores": 4,
+                "logical_cores": 8,
+                "ram_bytes": 17179869184,
+                "disk_total_bytes": 549755813888
+            }
+        },
+        "markers": [
+            {
+                "id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                "at_ms": 10,
+                "label": "Build",
+                "note": "Look here",
+                "kind": "chapter"
+            }
+        ],
+        "callouts": [
+            {
+                "id": "cccccccccccccccccccccccccccccccc",
+                "at_ms": 20,
+                "text": "A callout",
+                "duration_ms": 5000,
+                "pause": true
+            }
+        ],
+        "events": [
+            {
+                "delay_ms": 10,
+                "output": ["\u001b[32mhello 世界\u001b[0m\r\n"],
+                "command": {
+                    "id": "dddddddddddddddddddddddddddddddd",
+                    "phase": "start",
+                    "text": "echo hello",
+                    "partial": true
+                }
+            },
+            {
+                "delay_ms": 20,
+                "type": "s",
+                "size": [100, 30]
+            },
+            {
+                "delay_ms": 5,
+                "output": ["done\r\n"],
+                "command": {
+                    "id": "dddddddddddddddddddddddddddddddd",
+                    "phase": "end",
+                    "exit_code": 0
+                }
+            }
+        ]
+    }
+}

@@ -1,0 +1,28 @@
+name: Verify CLI
+on:
+    push:
+        branches: [master, dev]
+    pull_request:
+permissions:
+    contents: read
+jobs:
+    verify:
+        strategy:
+            matrix:
+                os: [ubuntu-latest, macos-latest]
+        runs-on: ${{ matrix.os }}
+        steps:
+            - uses: actions/checkout@v7.0.1
+            - uses: actions/setup-go@v7.0.0
+              with:
+                  go-version-file: go.mod
+            - run: make test
+            - run: make check
+            - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+    shell:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7.0.1
+            - run: sudo apt-get update && sudo apt-get install -y shellcheck shfmt
+            - run: shellcheck install.sh
+            - run: shfmt -ln posix -i 2 -ci -sr -d install.sh

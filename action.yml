@@ -1,0 +1,61 @@
+name: TermBackTime failure recording
+description: Record a command and attach rescanned, redacted terminal artifacts when it fails
+inputs:
+    command:
+        description: Command text to execute through a temporary script
+        required: true
+    shell:
+        description: Shell executable (bash, sh, or zsh)
+        default: bash
+    working-directory:
+        description: Directory in which to execute the command
+        default: .
+    artifact-name:
+        description: Name for the cleaned failure artifacts
+        default: terminal-failure
+    retention-days:
+        description: Artifact retention in days
+        default: '7'
+outputs:
+    exit-code:
+        description: Exact command exit status
+        value: ${{ steps.record.outputs.exit-code }}
+    artifact-id:
+        description: Uploaded artifact identifier, if the command failed
+        value: ${{ steps.artifact.outputs.artifact-id }}
+    artifact-url:
+        description: Uploaded artifact URL, if the command failed
+        value: ${{ steps.artifact.outputs.artifact-url }}
+runs:
+    using: composite
+    steps:
+        - uses: actions/setup-go@v7.0.0
+          with:
+              go-version-file: ${{ github.action_path }}/go.mod
+        - id: record
+          shell: bash
+          env:
+              TBT_ACTION_PATH: ${{ github.action_path }}
+              TBT_COMMAND: ${{ inputs.command }}
+              TBT_SHELL: ${{ inputs.shell }}
+              TBT_DIRECTORY: ${{ inputs.working-directory }}
+          run: bash "$TBT_ACTION_PATH/scripts/ci-record.sh"
+        - id: artifact
+          if: steps.record.outputs.exit-code != '0'
+          uses: actions/upload-artifact@v7.0.1
+          with:
+              name: ${{ inputs.artifact-name }}
+              path: ${{ steps.record.outputs.artifacts }}
+              retention-days: ${{ inputs.retention-days }}
+              if-no-files-found: error
+        - if: always()
+          shell: bash
+          env:
+              TBT_ARTIFACTS: ${{ steps.record.outputs.artifacts }}
+          run: |
+              if [[ -n "$TBT_ARTIFACTS" ]]; then rm -rf -- "$TBT_ARTIFACTS"; fi
+        - if: always() && steps.record.outputs.exit-code != ''
+          shell: bash
+          env:
+              TBT_EXIT_CODE: ${{ steps.record.outputs.exit-code }}
+          run: exit "$TBT_EXIT_CODE"

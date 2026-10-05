@@ -1,0 +1,225 @@
+[
+    {
+        "name": "event and ANSI boundaries",
+        "recording": {
+            "s": [80, 24],
+            "t": "password=supersecret",
+            "r": [
+                {
+                    "t": 100,
+                    "l": ["ghp_abcdefghijkl"]
+                },
+                {
+                    "t": 100,
+                    "l": ["\u001b[31mmnopqrstuvwx\u001b[0m\r\n"]
+                },
+                {
+                    "t": 100,
+                    "l": ["\u001b]52;c;PRIVATE"]
+                },
+                {
+                    "t": 100,
+                    "l": [
+                        "PAYLOAD\u0007safe\u001b]8;;https://secret.example/\u0007link\u001b]8;;\u0007\u001bPqIMAGE\u001b\\"
+                    ]
+                }
+            ]
+        },
+        "rules": {
+            "version": 1,
+            "detected": true
+        },
+        "expected": {
+            "s": [80, 24],
+            "t": "password=***********",
+            "i": {
+                "a": "",
+                "o": "",
+                "v": ""
+            },
+            "d": 0,
+            "r": [
+                {
+                    "t": 100,
+                    "l": ["****************"]
+                },
+                {
+                    "t": 100,
+                    "l": ["\u001b[31m************\u001b[0m\r\n"]
+                },
+                {
+                    "t": 100
+                },
+                {
+                    "t": 100,
+                    "l": ["safelink"]
+                }
+            ]
+        },
+        "findings": 2
+    },
+    {
+        "name": "Unicode cell widths",
+        "recording": {
+            "s": [80, 24],
+            "r": [
+                {
+                    "l": ["秘密 😀 é\r\n"]
+                }
+            ]
+        },
+        "rules": {
+            "version": 1,
+            "literals": ["秘密", "😀", "é"]
+        },
+        "expected": {
+            "s": [80, 24],
+            "i": {
+                "a": "",
+                "o": "",
+                "v": ""
+            },
+            "d": 0,
+            "r": [
+                {
+                    "l": ["**** ** *\r\n"]
+                }
+            ]
+        },
+        "findings": 0
+    },
+    {
+        "name": "interval reset and annotations",
+        "recording": {
+            "s": [80, 24],
+            "r": [
+                {
+                    "l": ["public"]
+                },
+                {
+                    "t": 100,
+                    "l": ["private"]
+                },
+                {
+                    "t": 200,
+                    "c": "s",
+                    "s": [100, 30]
+                },
+                {
+                    "t": 200,
+                    "l": ["after"]
+                },
+                {
+                    "t": 100,
+                    "l": ["end"]
+                }
+            ],
+            "markers": [
+                {
+                    "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "at_ms": 100,
+                    "label": "gone",
+                    "kind": "bookmark"
+                },
+                {
+                    "id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                    "at_ms": 500,
+                    "label": "after",
+                    "note": "retained",
+                    "kind": "chapter"
+                }
+            ]
+        },
+        "rules": {
+            "version": 1,
+            "intervals": [
+                {
+                    "start_ms": 100,
+                    "end_ms": 500
+                }
+            ]
+        },
+        "expected": {
+            "s": [80, 24],
+            "i": {
+                "a": "",
+                "o": "",
+                "v": ""
+            },
+            "d": 0,
+            "r": [
+                {
+                    "l": ["public"]
+                },
+                {
+                    "t": 100,
+                    "l": ["\u001bc"]
+                },
+                {
+                    "c": "s",
+                    "s": [100, 30]
+                },
+                {
+                    "l": ["after"]
+                },
+                {
+                    "t": 100,
+                    "l": ["end"]
+                }
+            ],
+            "markers": [
+                {
+                    "id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                    "at_ms": 100,
+                    "label": "after",
+                    "note": "retained",
+                    "kind": "chapter"
+                }
+            ]
+        },
+        "findings": 0
+    },
+    {
+        "name": "private key split over events",
+        "recording": {
+            "s": [80, 24],
+            "r": [
+                {
+                    "l": ["-----BEGIN PRIVATE KEY-----\n"]
+                },
+                {
+                    "t": 10,
+                    "l": ["ABCD1234\n-----END PRIVATE KEY-----"]
+                }
+            ],
+            "i": {
+                "a": "x64",
+                "o": "token=secretvalue",
+                "v": "go"
+            }
+        },
+        "rules": {
+            "version": 1,
+            "detected": true
+        },
+        "expected": {
+            "s": [80, 24],
+            "i": {
+                "a": "x64",
+                "o": "token=***********",
+                "v": "go"
+            },
+            "d": 0,
+            "r": [
+                {
+                    "l": ["***************************\n"]
+                },
+                {
+                    "t": 10,
+                    "l": ["********\n*************************"]
+                }
+            ]
+        },
+        "findings": 2
+    }
+]
