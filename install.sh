@@ -100,6 +100,7 @@ detect_platform() {
 
   case "$platform-$arch" in
     darwin-amd64 | darwin-arm64 | linux-amd64 | linux-386 | linux-arm64 | linux-armv6 | linux-armv7 | freebsd-amd64 | freebsd-386)
+      :
       ;;
     *)
       fail "No binary for $platform-$arch. Try: go install github.com/termbacktime/termbacktime@latest"
@@ -202,7 +203,9 @@ verify_release() {
     *) fail 'Archive binary must be a regular file' ;;
   esac
   tar -xzf "$work/release.tar.gz" -C "$work" termbacktime
-  [ -f "$work/termbacktime" ] && [ ! -L "$work/termbacktime" ] || fail 'Invalid binary'
+  if [ ! -f "$work/termbacktime" ] || [ -L "$work/termbacktime" ]; then
+    fail 'Invalid binary'
+  fi
   chmod 755 "$work/termbacktime"
   reported=$("$work/termbacktime" --version) || fail 'Downloaded binary cannot run on this system'
   case "$reported" in
