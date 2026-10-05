@@ -1,4 +1,4 @@
-# TermBackTime
+# [TermBackTime]
 
 Record, replay, and share terminal sessions. Recordings stay on your computer until you upload them to GitHub or start an encrypted, read-only live session.
 
