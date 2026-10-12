@@ -18,6 +18,35 @@ import (
 	"github.com/termbacktime/termbacktime/internal/recording"
 )
 
+// Capture hooks re-execute os.Executable(), which is this test binary, with
+// raw CLI arguments rather than the -test.run/-- wrapper used below. Dispatch
+// them before m.Run so they cannot accidentally start the entire test suite.
+func TestMain(m *testing.M) {
+	if len(os.Args) > 1 && os.Args[1] == "__capture-event" {
+		Execute()
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
+
+func TestCommandProcessDispatchesCaptureHelper(t *testing.T) {
+	t.Setenv("TBT_COMMAND_TEST_PROCESS", "1")
+	t.Setenv("TBT_CAPTURE_SOCKET", "")
+	t.Setenv("TBT_CAPTURE_TOKEN", "")
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	// Deliberately omit the test-runner wrapper, as a real capture hook does.
+	c := exec.CommandContext(ctx, os.Args[0], "__capture-event", "ready", "1")
+	c.Env = append(os.Environ(), "GORACE=atexit_sleep_ms=0")
+	c.Dir = t.TempDir()
+	c.WaitDelay = time.Second
+	out, err := c.CombinedOutput()
+	var exit *exec.ExitError
+	if ctx.Err() != nil || !errors.As(err, &exit) || exit.ExitCode() != 1 || string(out) != "Error: capture session is unavailable\n" {
+		t.Fatalf("capture helper was not dispatched directly: %v (context: %v)\n%s", err, ctx.Err(), out)
+	}
+}
+
 // Execute intentionally exits the process. A child test binary exercises the
 // real entry point without replacing os.Exit or requiring a separate build.
 func TestCommandProcess(t *testing.T) {

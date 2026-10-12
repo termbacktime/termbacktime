@@ -14,6 +14,59 @@ import (
 	"time"
 )
 
+func captureTestHome(t *testing.T) string {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("ZDOTDIR", home)
+	// Fish prefers XDG paths over HOME. Keep the runner's configuration and
+	// persistent state out of the shell fixtures, including universal variables.
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	t.Setenv("XDG_DATA_HOME", filepath.Join(home, ".local", "share"))
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, ".cache"))
+	// These fixtures record or discard output; they do not emulate a terminal
+	// that can answer fish's startup device queries. Do not wait for replies.
+	t.Setenv("fish_features", "no-query-term")
+	return home
+}
+
+func TestCaptureTestHomeIsolatesEnvironment(t *testing.T) {
+	inherited := map[string]string{
+		"HOME":            t.TempDir(),
+		"ZDOTDIR":         t.TempDir(),
+		"XDG_CONFIG_HOME": t.TempDir(),
+		"XDG_DATA_HOME":   t.TempDir(),
+		"XDG_CACHE_HOME":  t.TempDir(),
+		"fish_features":   "query-term",
+	}
+	for key, value := range inherited {
+		t.Setenv(key, value)
+	}
+	t.Run("isolated", func(t *testing.T) {
+		home := captureTestHome(t)
+		if home == inherited["HOME"] {
+			t.Fatal("fixture reused the inherited home")
+		}
+		for key, want := range map[string]string{
+			"HOME":            home,
+			"ZDOTDIR":         home,
+			"XDG_CONFIG_HOME": filepath.Join(home, ".config"),
+			"XDG_DATA_HOME":   filepath.Join(home, ".local", "share"),
+			"XDG_CACHE_HOME":  filepath.Join(home, ".cache"),
+			"fish_features":   "no-query-term",
+		} {
+			if got := os.Getenv(key); got != want {
+				t.Errorf("%s = %q, want %q", key, got, want)
+			}
+		}
+	})
+	for key, want := range inherited {
+		if got := os.Getenv(key); got != want {
+			t.Errorf("%s was not restored: got %q, want %q", key, got, want)
+		}
+	}
+}
+
 func TestCommandCapturePTY(t *testing.T) {
 	exe := filepath.Join(t.TempDir(), "termbacktime")
 	build := exec.Command("go", "build", "-o", exe, "../..")
@@ -31,9 +84,7 @@ func TestCommandCapturePTY(t *testing.T) {
 			if !supported(ShellContext(ctx, bin, nil)) {
 				t.Skip("interpreter too old")
 			}
-			home := t.TempDir()
-			t.Setenv("HOME", home)
-			t.Setenv("ZDOTDIR", home)
+			home := captureTestHome(t)
 			t.Setenv("PS1", "CAPTURE-READY> ")
 			t.Setenv("HISTFILE", filepath.Join(home, "history"))
 			t.Setenv("HISTCONTROL", "ignoredups")
@@ -200,9 +251,7 @@ func TestCommandCapturePropagatesRecordingFailures(t *testing.T) {
 				if err != nil || !supported(ShellContext(t.Context(), bin, nil)) {
 					t.Skip("supported interpreter unavailable")
 				}
-				home := t.TempDir()
-				t.Setenv("HOME", home)
-				t.Setenv("ZDOTDIR", home)
+				captureTestHome(t)
 				input, err := os.Open(os.DevNull)
 				if err != nil {
 					t.Fatal(err)
@@ -240,9 +289,7 @@ func TestCommandCaptureInterruptedPresentation(t *testing.T) {
 			if err != nil || !supported(ShellContext(t.Context(), bin, nil)) {
 				t.Skip("supported interpreter unavailable")
 			}
-			home := t.TempDir()
-			t.Setenv("HOME", home)
-			t.Setenv("ZDOTDIR", home)
+			captureTestHome(t)
 			input, _ := os.Open(os.DevNull)
 			defer input.Close()
 			output, _ := os.CreateTemp(t.TempDir(), "out")
