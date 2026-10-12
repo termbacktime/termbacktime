@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"sync"
 	"syscall"
+	"time"
 	"unicode/utf8"
 
 	"github.com/creack/pty"
@@ -22,6 +23,7 @@ import (
 
 type Event struct {
 	Text       string
+	Lifecycle  *CommandEvent
 	Cols, Rows int
 }
 
@@ -33,12 +35,16 @@ type Presentation interface {
 }
 
 type Options struct {
-	Shell         string
-	Args          []string // nil starts a login shell; an empty slice preserves explicit command startup
-	Input, Output *os.File
-	OnEvent       func(Event) error
-	Cols, Rows    int
-	Presentation  Presentation
+	Shell             string
+	CommandCapture    bool
+	CaptureContext    *ExecutionContext // reuse the context already probed for the recording header
+	CaptureExecutable string
+	CaptureNotice     func(string)
+	Args              []string // nil starts a login shell; an empty slice preserves explicit command startup
+	Input, Output     *os.File
+	OnEvent           func(Event) error
+	Cols, Rows        int
+	Presentation      Presentation
 }
 
 func Size(f *os.File) (int, int) {
@@ -86,18 +92,90 @@ func Run(parent context.Context, o Options) error {
 	if o.Cols > 0 && o.Rows > 0 {
 		cols, rows = o.Cols, o.Rows
 	}
-	child := exec.Command(o.Shell, o.Args...)
+	var mu sync.Mutex
+	errCh := make(chan error, 1)
+	fail := func(err error) {
+		if err != nil {
+			select {
+			case errCh <- err:
+			default:
+			}
+			cancel()
+		}
+	}
+	emitCommand := func(c CommandEvent) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if o.OnEvent != nil {
+			err := o.OnEvent(Event{Lifecycle: &c})
+			fail(err)
+			return err
+		}
+		return nil
+	}
+	var session *commandSession
+	direct := o.CommandCapture && o.Args != nil
+	if o.CommandCapture && !direct {
+		var prepareErr error
+		session, prepareErr = prepareCommandSession(ctx, o, emitCommand)
+		if prepareErr != nil && o.CaptureNotice != nil {
+			o.CaptureNotice(prepareErr.Error())
+		}
+		if session != nil {
+			defer session.Close()
+		}
+	}
+	childArgs := append([]string(nil), o.Args...)
+	if session != nil {
+		childArgs = append(session.args, childArgs...)
+	}
+	child := exec.Command(o.Shell, childArgs...)
 	if o.Args == nil {
 		// Interactive recordings should load the same login setup as a new
 		// terminal, including prompt functions defined in .bash_profile.
 		child.Args[0] = "-" + filepath.Base(o.Shell)
 	}
 	child.Env = append(os.Environ(), "TERM=xterm-256color")
+	if session != nil {
+		child.Env = append(child.Env, session.env...)
+	}
 	m, err := pty.StartWithSize(child, &pty.Winsize{Cols: uint16(cols), Rows: uint16(rows)})
 	if err != nil {
 		return err
 	}
 	defer m.Close()
+	var directID string
+	if direct {
+		directID = newCommandID()
+		cwd, _ := os.Getwd()
+		argv := append([]string{o.Shell}, o.Args...)
+		bytes := 0
+		for _, argument := range argv {
+			bytes += len(argument)
+		}
+		partial := len(argv) > 4096 || bytes > 16384
+		if partial {
+			argv = nil
+		}
+		if err := emitCommand(CommandEvent{ID: directID, Phase: "start", CWD: cwd, Argv: argv, Partial: partial}); err != nil {
+			_ = child.Process.Kill()
+			_ = child.Wait()
+			return err
+		}
+	}
+	if session != nil {
+		session.mu.Lock()
+		session.pid = child.Process.Pid
+		session.mu.Unlock()
+		if session.bootstrap != "" {
+			_ = captureEcho(m, false)
+			if _, err = m.Write([]byte(session.bootstrap)); err != nil {
+				_ = child.Process.Kill()
+				_ = child.Wait()
+				return err
+			}
+		}
+	}
 	if o.Presentation == nil && term.IsTerminal(int(o.Input.Fd())) {
 		old, err := term.MakeRaw(int(o.Input.Fd()))
 		if err != nil {
@@ -107,7 +185,6 @@ func Run(parent context.Context, o Options) error {
 		}
 		defer term.Restore(int(o.Input.Fd()), old)
 	}
-	var mu sync.Mutex
 	var decode Decoder
 	emit := func(text string, final bool) error {
 		mu.Lock()
@@ -119,16 +196,6 @@ func Run(parent context.Context, o Options) error {
 		return nil
 	}
 	var wg sync.WaitGroup
-	errCh := make(chan error, 1)
-	fail := func(err error) {
-		if err != nil {
-			select {
-			case errCh <- err:
-			default:
-			}
-			cancel()
-		}
-	}
 	resize := func(c, r int) error {
 		mu.Lock()
 		defer mu.Unlock()
@@ -151,6 +218,21 @@ func Run(parent context.Context, o Options) error {
 		_ = syscall.Kill(-child.Process.Pid, syscall.SIGKILL)
 		_ = m.Close()
 	}()
+	awaitCapture := func() {
+		if session != nil {
+			select {
+			case <-session.ready:
+			case <-time.After(3 * time.Second):
+				if o.CaptureNotice != nil {
+					o.CaptureNotice("Command capture initialization unavailable; capture gaps will need review")
+				}
+			case <-ctx.Done():
+			}
+			if session.bootstrap != "" {
+				_ = captureEcho(m, true)
+			}
+		}
+	}
 	if o.Presentation == nil {
 		wg.Add(2)
 		go func() {
@@ -170,6 +252,7 @@ func Run(parent context.Context, o Options) error {
 		}()
 		go func() {
 			defer wg.Done()
+			awaitCapture()
 			buf := make([]byte, 4096)
 			for ctx.Err() == nil {
 				poll := []unix.PollFd{{Fd: int32(o.Input.Fd()), Events: unix.POLLIN}}
@@ -199,6 +282,7 @@ func Run(parent context.Context, o Options) error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			awaitCapture()
 			err := o.Presentation.Run(ctx, o.Input, o.Output, func(b []byte) error { _, e := m.Write(b); return e }, resize)
 			if ctx.Err() == nil {
 				fail(err)
@@ -241,6 +325,27 @@ func Run(parent context.Context, o Options) error {
 		cancel()
 	}
 	waitErr := child.Wait()
+	if session != nil {
+		if err := session.finish(); err != nil && outputErr == nil {
+			outputErr = err
+		}
+	}
+	if direct {
+		code := 0
+		partial := false
+		if waitErr != nil {
+			var exit *exec.ExitError
+			if errors.As(waitErr, &exit) && exit.ExitCode() >= 0 {
+				code = exit.ExitCode()
+			} else {
+				code = 130
+				partial = true
+			}
+		}
+		if err := emitCommand(CommandEvent{ID: directID, Phase: "end", ExitCode: &code, Partial: partial}); err != nil && outputErr == nil {
+			outputErr = err
+		}
+	}
 	if o.Presentation != nil {
 		_ = o.Presentation.Close()
 	}

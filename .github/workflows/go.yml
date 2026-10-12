@@ -18,6 +18,10 @@ jobs:
               with:
                   go-version-file: go.mod
                   cache-dependency-path: go.sum
+            - if: runner.os == 'Linux'
+              run: sudo apt-get update && sudo apt-get install -y zsh fish
+            - if: runner.os == 'macOS'
+              run: brew install bash fish
             - run: make test
             - run: make check
             - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...

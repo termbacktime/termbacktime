@@ -362,6 +362,8 @@ func connectRole(ctx context.Context, host API, generation string, viewer, relay
 type Options struct {
 	OnDiagnostics   func(Diagnostics)
 	Endpoint, Shell string
+	CommandCapture  bool
+	CaptureContext  *terminal.ExecutionContext
 	Title           string
 	Started         int64
 	Args            []string
@@ -468,7 +470,7 @@ func Run(parent context.Context, o Options) error {
 		}
 	}()
 	go func() {
-		terminalDone <- terminal.Run(ctx, terminal.Options{Shell: o.Shell, Args: o.Args, Cols: cols, Rows: rows, Presentation: o.Presentation, OnEvent: func(e terminal.Event) error {
+		terminalDone <- terminal.Run(ctx, terminal.Options{Shell: o.Shell, Args: o.Args, CommandCapture: o.CommandCapture, CaptureContext: o.CaptureContext, CaptureNotice: status, Cols: cols, Rows: rows, Presentation: o.Presentation, OnEvent: func(e terminal.Event) error {
 			if o.OnEvent != nil {
 				if err := o.OnEvent(e); err != nil {
 					status("Recording failed; journal retained: " + err.Error())

@@ -39,6 +39,8 @@ Files default to `~/termbacktime/recordings/`. Custom output paths keep their ch
 
 `--upload` shares after capture and normally keeps the local copy. `--no-save` requires `--upload` and deletes its temporary copy even if uploading fails or is canceled; it cannot be combined with `--output` or queueing. `--no-metadata` disables optional computer details.
 
+Command capture is enabled for recordings and saved live sessions. Bash 4.4+, zsh 5.8+, and fish 3.6+ record submitted commands, directories, timing, and outcomes using temporary session hooks. `--no-command-capture` disables this independently of `--no-metadata`. Other shells still record terminal output; unavailable Bash history produces explicit command gaps. Capture covers the outer shell; nested shells, SSH, editor changes, program input, and the full environment are outside automatic capture.
+
 ## Manage recordings
 
 ```sh
@@ -128,7 +130,7 @@ termbacktime history clear
 
 Playback accepts local files, supported journals, and shared links. `Space` pauses; arrows jump five seconds; `,/.` step events; `+/-` change speed; `I/O` set loop bounds; `L` toggles looping. `q`, `Esc`, or `Ctrl+C` exits. `--no-interactive` disables controls.
 
-History is opt-in and offers **Resume / Start over**. Disabling retains positions; clearing deletes them. Website settings independently offer **Remember playback position**. Browser exports also include snapshots, offline/protected HTML, GIF, and WebM; CLI exports are text and Markdown.
+History is opt-in and offers **Resume / Start over**. Disabling retains positions; clearing deletes them. Website settings independently offer **Remember playback position**. Browser exports also include snapshots, offline/protected HTML, GIF, WebM, and reviewed runnable scripts. CLI exports are text and Markdown. To generate a script, open the recording on the website or in an offline player and choose **Export recording → Runnable script**.
 
 ## Live sharing
 

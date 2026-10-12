@@ -63,7 +63,9 @@
                     "i": "dddddddddddddddddddddddddddddddd",
                     "p": "start",
                     "t": "echo hello",
-                    "r": true
+                    "r": true,
+                    "w": "/workspace/sub",
+                    "a": ["echo", "hello 世界"]
                 }
             },
             {
@@ -80,7 +82,12 @@
                     "e": 0
                 }
             }
-        ]
+        ],
+        "x": {
+            "h": "bash",
+            "v": "5.3",
+            "w": "/workspace"
+        }
     },
     "readable": {
         "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -146,7 +153,9 @@
                     "id": "dddddddddddddddddddddddddddddddd",
                     "phase": "start",
                     "text": "echo hello",
-                    "partial": true
+                    "partial": true,
+                    "cwd": "/workspace/sub",
+                    "argv": ["echo", "hello 世界"]
                 }
             },
             {
@@ -163,6 +172,11 @@
                     "exit_code": 0
                 }
             }
-        ]
+        ],
+        "execution": {
+            "shell": "bash",
+            "version": "5.3",
+            "cwd": "/workspace"
+        }
     }
 }

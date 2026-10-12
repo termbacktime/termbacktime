@@ -36,18 +36,19 @@ type Event struct {
 	Lifecycle *CommandEvent `json:"e,omitempty"`
 }
 type Recording struct {
-	HistoryID string    `json:"-"`
-	Source    *Source   `json:"-"`
-	Metadata  *Metadata `json:"m,omitempty"`
-	ID        string    `json:"u,omitempty"`
-	Markers   []Marker  `json:"a,omitempty"`
-	Callouts  []Callout `json:"c,omitempty"`
-	Info      Info      `json:"i"`
-	Started   int64     `json:"d"`
-	Title     string    `json:"t,omitempty"`
-	Sizes     []int     `json:"s,omitempty"`
-	Lines     []Event   `json:"r,omitempty"`
-	Pack      string    `json:"p,omitempty"`
+	Execution *ExecutionContext `json:"x,omitempty"`
+	HistoryID string            `json:"-"`
+	Source    *Source           `json:"-"`
+	Metadata  *Metadata         `json:"m,omitempty"`
+	ID        string            `json:"u,omitempty"`
+	Markers   []Marker          `json:"a,omitempty"`
+	Callouts  []Callout         `json:"c,omitempty"`
+	Info      Info              `json:"i"`
+	Started   int64             `json:"d"`
+	Title     string            `json:"t,omitempty"`
+	Sizes     []int             `json:"s,omitempty"`
+	Lines     []Event           `json:"r,omitempty"`
+	Pack      string            `json:"p,omitempty"`
 }
 
 func ReadBounded(r io.Reader, max int64) ([]byte, error) {

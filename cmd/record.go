@@ -20,7 +20,7 @@ import (
 
 func newRecord(o *options) *cobra.Command {
 	var shell, output, title string
-	var upload, noSave, dashboardMode bool
+	var upload, noSave, dashboardMode, noCommandCapture bool
 	var u uploadFlags
 	var syncInterval time.Duration
 	c := &cobra.Command{
@@ -109,6 +109,12 @@ func newRecord(o *options) *cobra.Command {
 			}
 
 			cols, rows := terminal.Size(stdout())
+			var commandArgs []string
+			if len(args) > 0 {
+				shell = args[0]
+				commandArgs = args[1:]
+			}
+			var captureContext *terminal.ExecutionContext
 			var display terminal.Presentation
 			var dash *dashboard.Dashboard
 			if dashboardMode {
@@ -123,6 +129,11 @@ func newRecord(o *options) *cobra.Command {
 				Started: time.Now().Unix(),
 				Title:   title,
 				Sizes:   []int{cols, rows},
+			}
+			if !noCommandCapture {
+				x := terminal.ShellContext(c.Context(), shell, commandArgs)
+				captureContext = &x
+				rec.Execution = &recording.ExecutionContext{Shell: x.Shell, Version: x.Version, CWD: x.CWD}
 			}
 			if !u.noMetadata {
 				rec.Metadata = &recording.Metadata{Version: 1, Description: u.description, CaptureSystem: systeminfo.Collect(c.Context(), filepath.Dir(path))}
@@ -144,14 +155,15 @@ func newRecord(o *options) *cobra.Command {
 					return err
 				}
 			}
-			commandArgs := []string(nil)
-			if len(args) > 0 {
-				shell = args[0]
-				commandArgs = args[1:]
-			}
 			runErr := terminal.Run(c.Context(), terminal.Options{
-				Shell: shell,
-				Cols:  cols, Rows: rows, Presentation: display,
+				Shell: shell, CommandCapture: !noCommandCapture, CaptureContext: captureContext, CaptureNotice: func(message string) {
+					if dash != nil {
+						dash.Set(func(s *dashboard.State) { s.Status = message })
+					} else {
+						fmt.Fprintln(c.ErrOrStderr(), message)
+					}
+				},
+				Cols: cols, Rows: rows, Presentation: display,
 				Args:    commandArgs,
 				OnEvent: capture.Event,
 			})
@@ -203,6 +215,7 @@ func newRecord(o *options) *cobra.Command {
 			return nil
 		},
 	}
+	c.Flags().BoolVar(&noCommandCapture, "no-command-capture", false, "disable command text and directory capture")
 	c.Flags().BoolVar(&dashboardMode, "dashboard", false, "show an interactive terminal dashboard (Ctrl+] for controls)")
 	c.Flags().StringVar(&shell, "shell", "", "shell executable")
 	c.Flags().StringVarP(&output, "output", "o", "", "local recording filename")

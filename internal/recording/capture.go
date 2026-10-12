@@ -27,13 +27,16 @@ func (r *Capture) Event(e terminal.Event) error {
 	if r.finished {
 		return io.ErrClosedPipe
 	}
-	if e.Text == "" && e.Cols == 0 {
+	if e.Text == "" && e.Cols == 0 && e.Lifecycle == nil {
 		return nil
 	}
 	now := time.Now()
 	event := Event{Time: now.Sub(r.last).Milliseconds()}
 	r.last = now
-	if e.Cols > 0 {
+	if e.Lifecycle != nil {
+		c := e.Lifecycle
+		event.Lifecycle = &CommandEvent{ID: c.ID, Phase: c.Phase, Text: c.Text, CWD: c.CWD, Argv: c.Argv, ExitCode: c.ExitCode, Partial: c.Partial}
+	} else if e.Cols > 0 {
 		event.Command = "s"
 		event.Sizes = []int{e.Cols, e.Rows}
 	} else {

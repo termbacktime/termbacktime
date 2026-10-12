@@ -94,22 +94,28 @@ func TestRetainedTranscriptExports(t *testing.T) {
 	}
 }
 
-func TestRemovedHTMLExportAndPassphraseFlags(t *testing.T) {
-	dir := t.TempDir()
-	destination := filepath.Join(dir, "player.html")
-	c := newExport(&options{dataDir: filepath.Join(dir, "data")})
-	c.Flags().Set("format", "html")
-	c.Flags().Set("output", destination)
-	if err := c.RunE(c, []string{"missing.tbt"}); err == nil || err.Error() != "supported export formats: txt, md" {
-		t.Fatalf("HTML export should fail before loading the recording: %v", err)
+func TestRemovedExportFormatsAndFlags(t *testing.T) {
+	for _, format := range []string{"html", "script-plan", "script"} {
+		t.Run(format, func(t *testing.T) {
+			dir := t.TempDir()
+			destination := filepath.Join(dir, "export."+format)
+			c := newExport(&options{dataDir: filepath.Join(dir, "data")})
+			c.Flags().Set("format", format)
+			c.Flags().Set("output", destination)
+			if err := c.RunE(c, []string{"missing.tbt"}); err == nil || err.Error() != "supported export formats: txt, md" {
+				t.Fatalf("%s export should fail before loading the recording: %v", format, err)
+			}
+			if _, err := os.Stat(destination); !os.IsNotExist(err) {
+				t.Fatalf("%s export created an output file: %v", format, err)
+			}
+		})
 	}
-	if _, err := os.Stat(destination); !os.IsNotExist(err) {
-		t.Fatalf("HTML export created an output file: %v", err)
-	}
-	for _, flag := range []string{"encrypt", "passphrase-stdin"} {
-		c := newExport(&options{})
-		if err := c.ParseFlags([]string{"--" + flag}); err == nil || !strings.Contains(err.Error(), "unknown flag") {
-			t.Fatalf("removed flag --%s accepted: %v", flag, err)
-		}
+	for _, flag := range []string{"encrypt", "passphrase-stdin", "plan", "target", "script-shell", "prompt-prefix"} {
+		t.Run(flag, func(t *testing.T) {
+			c := newExport(&options{})
+			if err := c.ParseFlags([]string{"--" + flag}); err == nil || !strings.Contains(err.Error(), "unknown flag") {
+				t.Fatalf("removed flag --%s accepted: %v", flag, err)
+			}
+		})
 	}
 }

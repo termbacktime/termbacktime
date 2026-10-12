@@ -42,6 +42,9 @@ func NewID() string {
 func ValidID(id string) bool { return idPattern.MatchString(id) }
 
 func validateMetadata(r *Recording, duration int64) error {
+	if err := r.Execution.Validate(); err != nil {
+		return err
+	}
 	if err := validateCallouts(r, duration); err != nil {
 		return err
 	}

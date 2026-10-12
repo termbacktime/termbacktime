@@ -4,11 +4,30 @@ import "fmt"
 
 // CommandEvent is optional so existing readers still replay the output stream
 type CommandEvent struct {
-	ID       string `json:"i"`
-	Phase    string `json:"p"`
-	Text     string `json:"t,omitempty"`
-	ExitCode *int   `json:"e,omitempty"`
-	Partial  bool   `json:"r,omitempty"`
+	ID       string   `json:"i"`
+	Phase    string   `json:"p"`
+	Text     string   `json:"t,omitempty"`
+	ExitCode *int     `json:"e,omitempty"`
+	Partial  bool     `json:"r,omitempty"`
+	CWD      string   `json:"w,omitempty"`
+	Argv     []string `json:"a,omitempty"`
+}
+
+// ExecutionContext describes command capture, independently of computer metadata.
+type ExecutionContext struct {
+	Shell   string `json:"h"`
+	Version string `json:"v,omitempty"`
+	CWD     string `json:"w,omitempty"`
+}
+
+func (x *ExecutionContext) Validate() error {
+	if x == nil {
+		return nil
+	}
+	if len(x.Shell) > 128 || len(x.Version) > 128 || len(x.CWD) > 16384 {
+		return fmt.Errorf("invalid execution context")
+	}
+	return nil
 }
 
 type Callout struct {
@@ -20,12 +39,14 @@ type Callout struct {
 }
 
 type CommandChapter struct {
-	ID       string `json:"id"`
-	Text     string `json:"text"`
-	At       int64  `json:"at_ms"`
-	End      int64  `json:"end_ms"`
-	ExitCode *int   `json:"exit_code,omitempty"`
-	Partial  bool   `json:"partial,omitempty"`
+	ID       string   `json:"id"`
+	Text     string   `json:"text"`
+	At       int64    `json:"at_ms"`
+	End      int64    `json:"end_ms"`
+	ExitCode *int     `json:"exit_code,omitempty"`
+	Partial  bool     `json:"partial,omitempty"`
+	CWD      string   `json:"cwd,omitempty"`
+	Argv     []string `json:"argv,omitempty"`
 }
 
 func (c *CommandEvent) Validate() error {
@@ -37,6 +58,16 @@ func (c *CommandEvent) Validate() error {
 	}
 	if c.Phase == "start" && c.ExitCode != nil {
 		return fmt.Errorf("start event cannot have exit status")
+	}
+	if len(c.CWD) > 16384 || len(c.Argv) > 4096 {
+		return fmt.Errorf("invalid command context")
+	}
+	n := 0
+	for _, arg := range c.Argv {
+		n += len(arg)
+	}
+	if n > 16384 {
+		return fmt.Errorf("command arguments exceed 16 KiB")
 	}
 	return nil
 }
@@ -55,13 +86,13 @@ func Commands(r *Recording) []CommandChapter {
 		}
 		if c.Phase == "start" {
 			active[c.ID] = len(out)
-			partial[c.ID] = c.Partial
-			out = append(out, CommandChapter{ID: c.ID, Text: c.Text, At: at, End: duration, Partial: true})
+			partial[c.ID] = c.Partial || (c.Text == "" && len(c.Argv) == 0)
+			out = append(out, CommandChapter{ID: c.ID, Text: c.Text, CWD: c.CWD, Argv: c.Argv, At: at, End: duration, Partial: true})
 		} else if i, ok := active[c.ID]; ok {
-			out[i].End, out[i].ExitCode, out[i].Partial = at, c.ExitCode, c.Partial || partial[c.ID]
+			out[i].End, out[i].ExitCode, out[i].Partial = at, c.ExitCode, c.Partial || partial[c.ID] || c.ExitCode == nil
 			delete(active, c.ID)
 		} else {
-			out = append(out, CommandChapter{ID: c.ID, Text: c.Text, At: at, End: at, ExitCode: c.ExitCode, Partial: true})
+			out = append(out, CommandChapter{ID: c.ID, Text: c.Text, CWD: c.CWD, Argv: c.Argv, At: at, End: at, ExitCode: c.ExitCode, Partial: true})
 		}
 	}
 	return out

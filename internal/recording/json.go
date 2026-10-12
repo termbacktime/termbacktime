@@ -23,7 +23,7 @@ func (value *Event) UnmarshalJSON(data []byte) error {
 
 func (value *Recording) UnmarshalJSON(data []byte) error {
 	type wire Recording
-	return jsonkeys.Unmarshal(data, (*wire)(value), map[string]string{"metadata": "m", "id": "u", "markers": "a", "callouts": "c", "info": "i", "started_at": "d", "title": "t", "size": "s", "events": "r", "packed": "p"})
+	return jsonkeys.Unmarshal(data, (*wire)(value), map[string]string{"execution": "x", "metadata": "m", "id": "u", "markers": "a", "callouts": "c", "info": "i", "started_at": "d", "title": "t", "size": "s", "events": "r", "packed": "p"})
 }
 
 func (value *journalHeader) UnmarshalJSON(data []byte) error {
@@ -48,7 +48,12 @@ func (value *Marker) UnmarshalJSON(data []byte) error {
 
 func (value *CommandEvent) UnmarshalJSON(data []byte) error {
 	type wire CommandEvent
-	return jsonkeys.Unmarshal(data, (*wire)(value), map[string]string{"id": "i", "phase": "p", "text": "t", "exit_code": "e", "partial": "r"})
+	return jsonkeys.Unmarshal(data, (*wire)(value), map[string]string{"id": "i", "phase": "p", "text": "t", "exit_code": "e", "partial": "r", "cwd": "w", "argv": "a"})
+}
+
+func (value *ExecutionContext) UnmarshalJSON(data []byte) error {
+	type wire ExecutionContext
+	return jsonkeys.Unmarshal(data, (*wire)(value), map[string]string{"shell": "h", "version": "v", "cwd": "w"})
 }
 
 func (value *Callout) UnmarshalJSON(data []byte) error {

@@ -193,6 +193,11 @@ func Scan(r *Recording) []Finding {
 	check(r.Info.CLI, "metadata", 0)
 	check(r.Info.UploadCLI, "metadata", 0)
 	r.Metadata.Texts(func(value, _ string) { check(value, "metadata", 0) })
+	if r.Execution != nil {
+		check(r.Execution.Shell, "execution shell", 0)
+		check(r.Execution.Version, "execution version", 0)
+		check(r.Execution.CWD, "execution directory", 0)
+	}
 	for _, m := range r.Markers {
 		check(m.Label, "marker label", m.At)
 		check(m.Note, "marker note", m.At)
@@ -202,6 +207,10 @@ func Scan(r *Recording) []Finding {
 		at += e.Time
 		if e.Lifecycle != nil {
 			check(e.Lifecycle.Text, "command", at)
+			check(e.Lifecycle.CWD, "command directory", at)
+			for _, arg := range e.Lifecycle.Argv {
+				check(arg, "command argument", at)
+			}
 		}
 	}
 	for _, c := range r.Callouts {
@@ -358,6 +367,15 @@ func Redact(r *Recording, rules Rules) (*Recording, error) {
 	info := Info{Arch: cleanText(r.Info.Arch, rules), OS: cleanText(r.Info.OS, rules), Go: cleanText(r.Info.Go, rules), CLI: cleanText(r.Info.CLI, rules), UploadCLI: cleanText(r.Info.UploadCLI, rules)}
 	out := &Recording{ID: NewID(), Info: info, Started: r.Started, Title: cleanText(r.Title, rules), Sizes: append([]int(nil), r.Sizes...)}
 	out.Metadata = r.Metadata.Clean(rules)
+	contextChanged := false
+	if r.Execution != nil {
+		x := *r.Execution
+		x.Shell = cleanText(x.Shell, rules)
+		x.Version = cleanText(x.Version, rules)
+		x.CWD = cleanText(x.CWD, rules)
+		contextChanged = x != *r.Execution
+		out.Execution = &x
+	}
 	mapTime := func(t int64) (int64, bool) {
 		var removed int64
 		for _, v := range rules.Intervals {
@@ -402,7 +420,14 @@ func Redact(r *Recording, rules Rules) (*Recording, error) {
 		if e.Lifecycle != nil {
 			c := *e.Lifecycle
 			c.Text = cleanText(c.Text, rules)
-			c.Partial = c.Partial || cutCommands[c.ID]
+			c.CWD = cleanText(c.CWD, rules)
+			c.Argv = append([]string(nil), c.Argv...)
+			changed := c.Text != e.Lifecycle.Text || c.CWD != e.Lifecycle.CWD || contextChanged
+			for i, arg := range c.Argv {
+				c.Argv[i] = cleanText(arg, rules)
+				changed = changed || c.Argv[i] != arg
+			}
+			c.Partial = c.Partial || cutCommands[c.ID] || changed
 			e.Lifecycle = &c
 		}
 		if texts[i].Len() > 0 {

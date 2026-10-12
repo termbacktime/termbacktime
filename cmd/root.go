@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -14,6 +15,7 @@ import (
 	"github.com/termbacktime/termbacktime/internal/buildinfo"
 	"github.com/termbacktime/termbacktime/internal/config"
 	"github.com/termbacktime/termbacktime/internal/library"
+	"github.com/termbacktime/termbacktime/internal/terminal"
 	"github.com/termbacktime/termbacktime/internal/updates"
 )
 
@@ -109,6 +111,7 @@ func newRootWithUpdates(checker *updates.Checker) *cobra.Command {
 	root.PersistentFlags().StringVar(&o.endpoint, "endpoint", config.SiteURL(), "website and live API origin (or SITE_URL)")
 	root.PersistentFlags().BoolVar(&o.open, "open", false, "open resulting URL in browser")
 	root.PersistentFlags().BoolVar(&o.checkUpdate, "check-update", false, "check GitHub releases now, bypassing the 24-hour cache")
+	root.AddCommand(&cobra.Command{Use: "__capture-event PHASE PID", Hidden: true, Args: cobra.ExactArgs(2), PersistentPreRunE: func(*cobra.Command, []string) error { return nil }, RunE: func(c *cobra.Command, args []string) error { return terminal.RunCaptureHelper(c.InOrStdin(), args) }})
 	root.AddCommand(newRecord(o), newPlay(o), newAuth(o), newLive(o), newCompletion())
 	root.AddCommand(newList(o), newInfo(o), newImport(o), newRecover(o))
 	root.AddCommand(newQueue(o), newStorage(o), newHistory(o))
@@ -119,7 +122,23 @@ func newRootWithUpdates(checker *updates.Checker) *cobra.Command {
 	return root
 }
 
+// Capture hooks invoke this path twice per submitted command. Avoid constructing
+// Cobra commands, update checks and signal handlers for the private transport.
+func runCaptureHelper(args []string, input io.Reader) (bool, error) {
+	if len(args) == 0 || args[0] != "__capture-event" {
+		return false, nil
+	}
+	return true, terminal.RunCaptureHelper(input, args[1:])
+}
+
 func Execute() {
+	if handled, err := runCaptureHelper(os.Args[1:], os.Stdin); handled {
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Error:", err)
+			os.Exit(1)
+		}
+		return
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if err := NewRoot().ExecuteContext(ctx); err != nil {

@@ -84,7 +84,15 @@ func TestExecutePreservesSuccessErrorsAndChildSignalStatus(t *testing.T) {
 			}
 			if test.record {
 				r, err := recording.Load(path)
-				if err != nil || len(r.Lines) == 0 || !strings.Contains(r.Lines[0].Lines[0], "captured") {
+				var output strings.Builder
+				if r != nil {
+					for _, event := range r.Lines {
+						for _, line := range event.Lines {
+							output.WriteString(line)
+						}
+					}
+				}
+				if err != nil || !strings.Contains(output.String(), "captured") {
 					t.Fatal(r, err)
 				}
 				if _, err := os.Stat(path + ".partial"); !os.IsNotExist(err) {
@@ -131,5 +139,29 @@ func TestExecuteSIGTERMCancelsCaptureAndFinalizesRecording(t *testing.T) {
 	}
 	if _, err := os.Stat(path + ".partial"); !os.IsNotExist(err) {
 		t.Fatal("cancellation left an unfinished journal", err)
+	}
+}
+
+func TestExplicitRecordingSkipsShellVersionProbe(t *testing.T) {
+	h := newCommandHarness(t)
+	dir := t.TempDir()
+	shell, probes := filepath.Join(dir, "bash"), filepath.Join(dir, "probes")
+	if err := os.WriteFile(shell, []byte("#!/bin/sh\nprintf probe > \"$TBT_PROBE_LOG\"\nprintf 'GNU bash, version 5.3.0\\n'\n"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("TBT_PROBE_LOG", probes)
+	path := filepath.Join(dir, "recording.tbt")
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	out, err := commandProcess(t, ctx, "--data-dir", h.data, "--config", h.config, "record", "--no-metadata", "--shell", shell, "--output", path, "--", "/bin/sh", "-c", "printf captured").CombinedOutput()
+	if err != nil {
+		t.Fatal(string(out), err)
+	}
+	if _, err := os.Stat(probes); !os.IsNotExist(err) {
+		t.Fatal("explicit command unnecessarily probed the interactive shell", err)
+	}
+	r, err := recording.Load(path)
+	if err != nil || r.Execution == nil || len(recording.Commands(r)) != 1 || len(recording.Commands(r)[0].Argv) != 3 {
+		t.Fatal("explicit command metadata lost", r, err)
 	}
 }

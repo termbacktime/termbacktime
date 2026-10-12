@@ -18,7 +18,7 @@ import (
 func newLive(o *options) *cobra.Command { return liveCommand(o, live.Run) }
 func liveCommand(o *options, run func(context.Context, live.Options) error) *cobra.Command {
 	var shell, output, title string
-	var save, noMetadata, noDashboard bool
+	var save, noMetadata, noDashboard, noCommandCapture bool
 	var interval, ttl time.Duration
 	c := &cobra.Command{Use: "live [-- command args...]", Short: "Share an encrypted, read-only terminal", RunE: func(c *cobra.Command, args []string) (result error) {
 		dashboardMode := !noDashboard && interactiveUpload(c)
@@ -46,6 +46,7 @@ func liveCommand(o *options, run func(context.Context, live.Options) error) *cob
 			}
 		}
 		var capture *recording.Capture
+		var captureContext *terminal.ExecutionContext
 		var failed bool
 		started := time.Now().Unix()
 		if save || c.Flags().Changed("output") {
@@ -64,6 +65,11 @@ func liveCommand(o *options, run func(context.Context, live.Options) error) *cob
 				dash.Set(func(s *dashboard.State) { s.Path = output })
 			}
 			r := recording.Recording{ID: recording.NewID(), Title: title, Started: started, Sizes: []int{cols, rows}, Info: recording.CurrentInfo()}
+			if !noCommandCapture {
+				x := terminal.ShellContext(c.Context(), shell, commandArgs)
+				captureContext = &x
+				r.Execution = &recording.ExecutionContext{Shell: x.Shell, Version: x.Version, CWD: x.CWD}
+			}
 			if !noMetadata {
 				r.Metadata = &recording.Metadata{Version: 1, CaptureSystem: systeminfo.Collect(c.Context(), filepath.Dir(output))}
 			}
@@ -88,7 +94,7 @@ func liveCommand(o *options, run func(context.Context, live.Options) error) *cob
 				fmt.Fprintln(c.ErrOrStderr(), "Saved", output)
 			}()
 		}
-		return run(c.Context(), live.Options{Endpoint: o.endpoint, Shell: shell, Args: commandArgs, TTL: ttl, Title: title, Started: started, Cols: cols, Rows: rows, Presentation: display,
+		return run(c.Context(), live.Options{Endpoint: o.endpoint, Shell: shell, CommandCapture: capture != nil && !noCommandCapture, CaptureContext: captureContext, Args: commandArgs, TTL: ttl, Title: title, Started: started, Cols: cols, Rows: rows, Presentation: display,
 			OnReady: func(link string) {
 				if dash != nil {
 					dash.Set(func(s *dashboard.State) { s.Viewer = link; s.Status = "Sharing" })
@@ -119,6 +125,7 @@ func liveCommand(o *options, run func(context.Context, live.Options) error) *cob
 			},
 		})
 	}}
+	c.Flags().BoolVar(&noCommandCapture, "no-command-capture", false, "disable command text and directory capture")
 	c.Flags().BoolVar(&noDashboard, "no-dashboard", false, "disable the automatic terminal dashboard")
 	c.Flags().StringVar(&shell, "shell", "", "shell executable")
 	c.Flags().BoolVar(&noMetadata, "no-metadata", false, "disable optional local computer metadata")
