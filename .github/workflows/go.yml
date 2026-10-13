@@ -24,7 +24,7 @@ jobs:
               run: brew install bash fish
             - run: make test
             - run: make check
-            - run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+            - run: make vuln
     shell:
         runs-on: ubuntu-latest
         steps:

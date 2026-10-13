@@ -4,7 +4,7 @@ Record, replay, and share terminal sessions. Recordings stay on your computer un
 
 ## Install
 
-With Go 1.27.1, or automatic Go toolchain selection:
+With Go, or automatic Go toolchain selection:
 
 ```sh
 go install github.com/termbacktime/termbacktime@latest

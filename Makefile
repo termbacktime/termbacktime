@@ -1,4 +1,4 @@
-.PHONY: build build\:dev build\:prod install test check format release clean
+.PHONY: build build\:dev build\:prod install test check vuln format release clean
 
 build build\:prod:
 	go run ./scripts/build-go build prod
@@ -15,6 +15,9 @@ test:
 check:
 	go vet ./...
 	test -z "$$(gofmt -l cmd internal scripts main.go)"
+
+vuln:
+	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
 format:
 	gofmt -w cmd internal scripts main.go
